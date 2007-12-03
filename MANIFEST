@@ -1,0 +1,7 @@
+Changes
+Makefile.PL
+MANIFEST
+README
+t/Data-Rlist.t
+lib/Data/Rlist.pm
+META.yml                                 Module meta-data (added by MakeMaker)
