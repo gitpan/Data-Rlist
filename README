@@ -1,7 +1,11 @@
-Data-Rlist version 1.35
+Data-Rlist version 1.36
 =======================
 
-$Writestamp: 2007-12-03 11:20:47 eh2sper$
+$Writestamp: 2007-12-04 13:02:53 andreas$
+
+ABOUT
+
+A lightweight data format language for Perl, C and C++.
 
 INSTALLATION
 
@@ -27,9 +31,11 @@ locally.  The module is self-contained and depends only on standard modules
 		Data::Rlist->import();
 	}
 
+The Rlist C/C++ library can be downloaded from <http://www.visualco.de>.
+
 COPYRIGHT AND LICENCE
 
-Copyright (C) 2007 by Andreas Spindler
+Copyright (C) 1998-2007 by Andreas Spindler
 
 Mail to <rlist@visualco.de>
 

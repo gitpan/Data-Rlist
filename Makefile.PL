@@ -11,8 +11,8 @@
 # See also perlnewmod, perlmodinstall, h2xs.
 #
 #####
-# $Writestamp: 2007-12-04 00:39:20 andreas$
-# $Compile: perl Makefile.PL; make test$
+# $Writestamp: 2007-12-04 13:00:18 andreas$
+# $Compile: make disttest$
 # $Clean: make realclean$
 #
 
@@ -35,7 +35,7 @@ EOD
 
 print "perl thinks the current OS is '$^O'\n";
 
-system('pod2html lib/Data/Rlist.pm >Rlist.pm.html');
+#system('pod2html lib/Data/Rlist.pm >Rlist.pm.html');
 
 WriteMakefile(
 	NAME			=> 'Data::Rlist',

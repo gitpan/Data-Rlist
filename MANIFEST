@@ -1,7 +1,15 @@
 Changes
+lib/Data/Rlist.pm
 Makefile.PL
 MANIFEST
 README
+Rlist.pm.html
+t/camel.t
 t/Data-Rlist.t
-lib/Data/Rlist.pm
+t/deparse.t
+t/keelhaul.t
+t/round.t
+t/test1.rls
+t/test2.rls
+t/void.t
 META.yml                                 Module meta-data (added by MakeMaker)

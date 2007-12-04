@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:                Data-Rlist
-version:             1.35
+version:             1.36
 abstract:            A lightweight data language for Perl, C and C++
 license:             ~
 generated_by:        ExtUtils::MakeMaker version 6.36
