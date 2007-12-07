@@ -5,6 +5,7 @@ MANIFEST
 README
 Rlist.pm.html
 t/camel.t
+t/csv.t
 t/Data-Rlist.t
 t/deparse.t
 t/keelhaul.t

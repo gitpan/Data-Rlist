@@ -4,14 +4,14 @@
 #
 # This test compares two Rlists compiled with different compile options.
 #
-# $Writestamp: 2007-12-04 00:34:43 andreas$
+# $Writestamp: 2007-12-05 19:58:25 eh2sper$
 # $Compile: perl -M'constant standalone => 1' round.t$
 
 use warnings;
 use strict;
 use constant;
 use Test;
-BEGIN { plan tests => 7 + 963 }
+BEGIN { plan tests => 7 + 1203 }
 BEGIN { unshift @INC, '../lib' if $constant::declared{'main::standalone'} }
 
 use Data::Rlist qw/:options/;
@@ -61,7 +61,7 @@ ___
 	  expected_loss_diff => 0.00193048336651,
 	  Pi => $Pi
 	 },
-
+	 foo => 'bar',
 	 numbers =>
 	 [
 	  .23E-10,							# a very small number
@@ -105,6 +105,7 @@ ___
 		my $opts = Data::Rlist::complete_options($s);
 		$opts->{precision} = $prec;
 		$opts->{scientific} = $scn;
+		$opts->{auto_quote} = $scn;
 		$opts
 	}
 
@@ -112,8 +113,9 @@ ___
 		foreach $preb (reverse @predefd) {
 			next if $prea eq $preb;
 			foreach $oo (0..1) {
-				$to_string = $scntfc = $oo;
-				foreach $prec (qw/0 2 12 15/) {
+				$to_string = !$oo;
+				$scntfc = $oo;
+				foreach $prec (undef, qw/0 2 12 15/) {
 					# Get compile-options that determine how to make %A and %B
 					# from %org. For non-refinable compile options "fast" and
 					# "perl" clear the precision for both option sets

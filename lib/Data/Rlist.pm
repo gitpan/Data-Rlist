@@ -9,7 +9,7 @@ Data::Rlist - A lightweight data language for Perl, C and C++
 
 =cut
 
-# $Writestamp: 2007-12-04 13:14:51 andreas$
+# $Writestamp: 2007-12-05 20:11:20 eh2sper$
 # $Compile: pod2html Rlist.pm >../../Rlist.pm.html$
 
 =head1 SYNOPSIS
@@ -55,7 +55,7 @@ Passing an argument to F<write()> eventually overrides F<-output>:
 
     $object->write(".barrc");           # write to some other file
 
-F<L</write_string()>> and F<L</make_string()>> make up a string out of thin air, no matter how
+F<L</write_string>()> and F<L</make_string>()> make up a string out of thin air, no matter how
 F<-output> is set:
 
     $string_ref = $object->write_string; # write to new string (ignores -output)
@@ -96,8 +96,8 @@ F<Data::Rlist> can also create deep-copies of Perl data, a functionality called 
     $deep_copy = $object->keelhaul; # create in-depth copy of $thing
 
 The metaphor vividly connotes that F<$thing> is stringified, then compiled back.  See
-F<L</keelhaul()>> for why this only sounds useless.  The little brother of F<L</keelhaul()>> is
-F<L</deep_compare()>>:
+F<L</keelhaul>()> for why this only sounds useless.  The little brother of F<L</keelhaul>()> is
+F<L</deep_compare>()>:
 
     print join("\n", Data::Rlist::deep_compare($a, $b));
 
@@ -223,7 +223,7 @@ C<"">.
 
 Strings are quoted implicitly when building Rlists; when reading them back strings are unquoted.
 Quoting means to L<encode characters|/Character Encoding>, then wrap the string into C<">.  You can
-can also make use of this functionality by calling F<L</quote()>> and F<L</unquote()>> as separate
+can also make use of this functionality by calling F<L</quote>()> and F<L</unquote>()> as separate
 functions.
 
 =head2 Here Documents
@@ -357,36 +357,43 @@ Value
 
 =head2 Compile Options
 
-The format of the compiled text and the behavior of F<L</compile()>> can be controlled by the
-OPTIONS parameter of F<L</write()>>, F<L</write_string()>> etc.  The argument is a hash defining how
+The format of the compiled text and the behavior of F<L</compile>()> can be controlled by the
+OPTIONS parameter of F<L</write>()>, F<L</write_string>()> etc.  The argument is a hash defining how
 the Rlist text shall be formatted. The following pairs are recognized:
 
 =over
 
 =item 'precision' =E<gt> NUMBER
 
-Unless NUMBER F<undef> round all numbers to the decimal places NUMBER by calling F<L</round()>>.  By
-default NUMBER is undef, so F<L</compile()>> does not round floats.
+Unless NUMBER F<undef> round all numbers to the decimal places NUMBER by calling F<L</round>()>.  By
+default NUMBER is undef, so F<L</compile>()> does not round floats.
 
 =item 'scientific' =E<gt> FLAG
 
-Causes F<compile()> to masquerade F<$Data::Rlist::RoundScientific>; see F<L</round()>> for the
-implications.  Alternately the F<-RoundScientific> object attribute can be set; see F<L</new()>>.
+Causes F<compile()> to masquerade F<$Data::Rlist::RoundScientific>; see F<L</round>()> for the
+implications.  Alternately the F<-RoundScientific> object attribute can be set; see F<L</new>()>.
 
 =item 'code_refs' =E<gt> FLAG
 
-If enabled and F<L</write()>> encounters a F<CODE> reference, calls the code, then compiles the
+If enabled and F<L</write>()> encounters a F<CODE> reference, calls the code, then compiles the
 return value.  Disabled by default.
 
 =item 'threads' =E<gt> COUNT
 
-If enabled F<L</compile()>> internally use multiple threads.  Note that this makes only sense on
+If enabled F<L</compile>()> internally use multiple threads.  Note that this makes only sense on
 machines with at least COUNT CPUs.
 
 =item 'here_docs' =E<gt> FLAG
 
 If enabled strings with at least two newlines in them are written in the L<here-doc-format|Here
 Documents>.  Note that the string has to be terminated with a C<"\n"> to qualify as here-document.
+
+=item 'auto_quote' =E<gt> FLAG
+
+When true do not quote strings that look like identifiers (by means of F<L<is_name)()>), otherwise
+quote F<all> strings.  Note that hash keys are not affected by this flag.  The default is true, but
+not for F<L<write_csv>()> and F<L<write_conf>()>, where the default is false (quote all
+non-numbers).
 
 =item 'outline_data' =E<gt> NUMBER
 
@@ -398,13 +405,15 @@ array value; 0 disables outlining.
 If enabled, and C<"outline_data"> also is also enabled, prints F<{> and F<}> on distinct lines when
 compiling Perl hashes with at least one pair.
 
-=item 'comma' =E<gt> STRING
+=item 'separator' =E<gt> STRING
 
-The comma-separator string to be used by F<L</write_csv()>>.  The default is C<','>.
+The comma-separator string to be used by F<L</write_csv>()>.  The default is C<','>.
 
-=item 'delimiter' =E<gt> STRING-OR-REGEX
+=item 'delimiter' =E<gt> REGEX
 
-Field-delimiter for F<L</read_csv()>>.  The default is C<'\s*,\s*'>.
+Field-delimiter for F<L</read_csv>()>.  There is no default value.  To read configuration files,
+for example, you may use C<'\s*=\s*'> or C<'\s+'>; and to read CSV-files you may use
+C<'\s*[,;]\s*'>.
 
 =back
 
@@ -432,7 +441,7 @@ String to write after F<(> and F<{>, and before F<}> and F<)> when compiling arr
 =item 'semicolon_punct' =E<gt> STRING
 
 Comma and semicolon strings, which shall be at least C<","> and C<";">.  No matter what,
-F<L</compile()>> will always print the C<"eol"> string after the C<"semicolon"> string.
+F<L</compile>()> will always print the C<"eol"> string after the C<"semicolon"> string.
 
 =item 'assign_punct' =E<gt> STRING
 
@@ -466,28 +475,28 @@ Very compact, no whitespace at all. For very large Rlists.
 
 =item 'perl'
 
-Compile data in Perl syntax, using F<L</compile_Perl()>>, not F<L</compile()>>.
+Compile data in Perl syntax, using F<L</compile_Perl>()>, not F<L</compile>()>.
 
 =item 'fast' or F<undef>
 
-Compile data as fast as possible, using F<L<compile_fast()>>, not compile().
+Compile data as fast as possible, using F<L<compile_fast>()>, not compile().
 
 =back
 
 All functions that define an L<OPTIONS|/Compile Options> parameter implicitly call
-F<L</complete_options()>> to complete it from one of the predefined set, and C<"default">.
+F<L</complete_options>()> to complete it from one of the predefined set, and C<"default">.
 Therefore you may just define a "lazy subset of options" to these functions. For example,
 
     my $obj = new Data::Rlist(-data => $thing);
     $obj->write('thing.rls', { scientific => 1, precision => 8 });
 
-See also L</complete_options()>, L</predefined_options()> and F<:options>.
+See also L</complete_options>(), L</predefined_options>() and F<:options>.
 
 =head2 Debugging Data (Finding Self-References)
 
 Debugging (hierachical) data means breaking recursively-defined data.
 
-Set F<$Data::Rlist::MaxDepth> to an integer above 0 to define the depth under which F<L</compile()>>
+Set F<$Data::Rlist::MaxDepth> to an integer above 0 to define the depth under which F<L</compile>()>
 shall not venture deeper. 0 disables debugging.  When positive compilation breaks on deep
 recursions caused by circular references, and on F<stderr> a message like the following is printed:
 
@@ -496,7 +505,7 @@ recursions caused by circular references, and on F<stderr> a message like the fo
 The message will also be repeated as comment when the compiled Rlist is written to a file.
 Furthermore F<$Data::Rlist::Broken> is incremented by one - and compilation continues!  So, any
 attempt to venture deeper as suggested by F<$Data::Rlist::MaxDepth> in the data will be blocked,
-but compilation continues above that depth.  After F<L</write()>> or F<L</write_string()>> returned,
+but compilation continues above that depth.  After F<L</write>()> or F<L</write_string>()> returned,
 the caller can check whether F<$Data::Rlist::Broken> is not zero.  Then not all of the data was
 compiled into text.
 
@@ -547,7 +556,7 @@ implementation of Rlist, since Perl is a language with weak types. As a language
 typing, C++ is quasi the antipode to Perl. With the C++ implementation of Rlist then there's no
 need to quote strings that look like numbers.
 
-See also F<L</write()>>, F<L</is_numeric()>>, F<L</is_name()>>, F<L</is_random_text()>> and
+See also F<L</write>()>, F<L</is_numeric>()>, F<L</is_name>()>, F<L</is_random_text>()> and
 F<L<http://en.wikipedia.org/wiki/American_Standard_Code_for_Information_Interchange>>.
 
 =head2 Speed-up Compilation
@@ -560,9 +569,9 @@ operating at 750 MHz, takes about 18-22 seconds.
 
 =head3 Explicit Quoting
 
-The process of compiling can be speed up by calling F<L</quote()>> explicitly on scalars. That is,
-before calling F<L</write()>> or F<L</write_string()>>.  Large data sets may compile faster when for
-scalars, that certainly not qualify as symbolic name, F<L</quote()>> is called in advance:
+The process of compiling can be speed up by calling F<L</quote>()> explicitly on scalars. That is,
+before calling F<L</write>()> or F<L</write_string>()>.  Large data sets may compile faster when for
+scalars, that certainly not qualify as symbolic name, F<L</quote>()> is called in advance:
 
     use Data::Rlist qw/:strings/;
 
@@ -578,11 +587,11 @@ instead of
         .
     Data::Rlist::write("data.rlist", \%data);
 
-It depends on the case whether the first variant is faster: F<L</compile()>> and
-F<L</compile_fast()>> both have to call F<L</is_random_text()>> on each scalar.  When the scalar is
+It depends on the case whether the first variant is faster: F<L</compile>()> and
+F<L</compile_fast>()> both have to call F<L</is_random_text>()> on each scalar.  When the scalar is
 already quoted, i.e. its first character is C<">, this test ought to run faster.
 
-Note that internally F<L</is_random_text()>> applies the precompiled regex F<$g_re_value>.  But for
+Note that internally F<L</is_random_text>()> applies the precompiled regex F<$g_re_value>.  But for
 a given scalar F<$s> the expression
 
     ($s !~ $Data::Rlist::g_re_value)
@@ -606,6 +615,7 @@ use vars qw/$VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS
             $RoundScientific $SafeCppMode 
             $R $Fh $Locked $DefaultMaxDepth $MaxDepth $Depth
             $Errors $Broken $MissingInput
+			$DefaultCsvDelimiter $DefaultConfDelimiter $DefaultConfSeparator
 
             $g_re_punct_cset $g_re_float_here
             $g_re_name_cset $g_re_name_here
@@ -617,13 +627,14 @@ use vars qw/$Readstruct $ReadFh $C1 $Ln $LnArray/; # used by open, lex
 use constant DEFAULT => qq'""'; # default Rlist, the empty string
 
 BEGIN {
-    $VERSION = '1.36';
+    $VERSION = '1.37';
     $DEBUG = 0;
     @ISA = qw/Exporter/;
 
     # Always exported (:DEFAULT) when the package is fetched with "use", not "required".
 
     @EXPORT = qw/ReadCSV WriteCSV
+				 ReadConf WriteConf
                  ReadData WriteData
                  PrintData OutlineData StringizeData SqueezeData
                  KeelhaulData CompareData/;
@@ -659,6 +670,9 @@ BEGIN {
     $MaxDepth = 0; $DefaultMaxDepth = 100; $Broken = 0;
     $SafeCppMode = 1;
     $RoundScientific = 0;
+	$DefaultConfSeparator = ' = ';
+	$DefaultConfDelimiter = '\s*=\s*';
+	$DefaultCsvDelimiter = '\s*,\s*';
 
     %PredefinedOptions =
     (
@@ -671,15 +685,16 @@ BEGIN {
       outline_hashes => 0,
       outline_data => 6,
       paren_space => '',
-      comma => ',',             # used only by write_csv()
-      delimiter => '\s*,\s*',   # used only by read_csv()
       comma_punct => ', ',
       semicolon_punct => ';',
       assign_punct => ' = ',
       here_docs => 1,
+      auto_quote => undef,		# let write() and write_csv() choose their defaults
       code_refs => 0,
-      precision => undef,
-      scientific => 0
+      scientific => 0,
+      separator => ',',
+      delimiter => undef,
+      precision => undef
      },
 
      string =>
@@ -911,8 +926,9 @@ sub pr1nt(@)
 
 These are the core functions to cultivate package objects.
 
-The following functions may be called also as methods: F<L</read()>>, F<L</read_csv()>>,
-F<L</read_string()>>, F<L</write()>>, F<L</write_string()>> and F<L</keelhaul()>>. 
+The following functions may be called also as methods: F<L</read>()>, F<L</read_csv>()>,
+F<L</read_conf>()>, F<L</read_string>()>, F<L</write>()>, F<L</write_string>()> and
+F<L</keelhaul>()>.
 
 =over
 
@@ -926,13 +942,13 @@ B<REGULAR ATTRIBUTES>
 
     -input => INPUT
 
-Defines what to parse. INPUT defines a filename or string reference.  Applied by F<L</read()>>,
-F<L</read_csv()>> and F<L</read_string()>>.
+Defines what to parse. INPUT defines a filename or string reference.  Applied by F<L</read>()>,
+F<L</read_csv>()> and F<L</read_string>()>.
 
     -data => DATA
 
-Defines the data to be compiled.  DATA is some Perl data.  Applied by F<L</write()>>,
-F<L</write_string()>> and F<L</keelhaul()>>.
+Defines the data to be compiled.  DATA is some Perl data.  Applied by F<L</write>()>,
+F<L</write_string>()> and F<L</keelhaul>()>.
 
     -output => OUTPUT (optional)
 
@@ -941,12 +957,12 @@ Defines where to put the compilation: either a filename, string-reference or F<u
     -filter => FILTER (optional)
     -filter-args => FILTER-ARGS (optional)
 
-Used by F<L</read()>> as the preprocessor on the input file. Then applied before parsing. FILTER can
-be 1 to select the standard C preprocessor F<cpp>.  Applied by F<L</open_input()>>.
+Used by F<L</read>()> as the preprocessor on the input file. Then applied before parsing. FILTER can
+be 1 to select the standard C preprocessor F<cpp>.  Applied by F<L</open_input>()>.
 
     -delimiter => DELIMITER (optional)
 
-See F<L</read_csv()>>.
+See F<L</read_csv>()>.
 
     -options => OPTIONS (optional)
 
@@ -956,7 +972,7 @@ Defines the L<compile options|/Compile Options>.
     -columns => STRINGS (optional)
 
 Defines the header text (the comments) for data written to files, and the column names of CSV
-files.  Used in place of the HEADER parameter of F<L</write()>> and COLUMNS of F<L</write_csv()>>.
+files.  Used in place of the HEADER parameter of F<L</write>()> and COLUMNS of F<L</write_csv>()>.
 
 B<ATTRIBUTES THAT MASQUERADE PACKAGE GLOBALS>
 
@@ -966,20 +982,36 @@ F<$Data::Rlist::Locked> is true.)  When the method returns the previous globals 
 
     -SafeCppMode => FLAG (optional)
 
-Used by F<L</read()>> to masquerade F<$Data::Rlist::SafeCppMode>.
+Used by F<L</read>()> to masquerade F<$Data::Rlist::SafeCppMode>.
 
     -MaxDepth => INTEGER (optional)
 
-Used by F<L</write()>> to masquerade F<$Data::Rlist::MaxDepth>.
+Used by F<L</write>()> to masquerade F<$Data::Rlist::MaxDepth>.
+
+	-DefaultCsvDelimiter => REGEX (optional)
+
+F<L</read_csv>()> uses this attribute to masquerade F<$Data::Rlist::DefaultCsvDelimiter>.  REGEX is
+then used as a default, when the F<-options> attribute does not specifiy the C<"delimiter"> compile
+option.
+
+	-DefaultConfDelimiter => REGEX (optional)
+
+F<L</read_conf>()> uses this attribute to masquerade F<$Data::Rlist::DefaultConfDelimiter>, the
+default regex to use when the F<-options> attribute does not specifiy the C<"delimiter">.
+
+	-DefaultConfSeparator => STRING (optional)
+
+F<L</write_conf>()> uses this attribute to masquerade F<$Data::Rlist::DefaultConfSeparator>, the
+default string to use when the F<-options> attribute does not specifiy the C<"separator">.
 
     -RoundScientific => FLAG (optional)
 
-Used by F<L</round()>> during compilation. Masquerades F<$Data::Rlist::RoundScientific>.  Note that
+Used by F<L</round>()> during compilation. Masquerades F<$Data::Rlist::RoundScientific>.  Note that
 F<round()> is only called when the C<"precision"> option is defined.
 
 =item F<set(SELF[, ATTRIBUTES])>
 
-Reset or initialize object attributes (see F<L</new()>>).  Returns SELF.  Example:
+Reset or initialize object attributes (see F<L</new>()>).  Returns SELF.  Example:
 
     $obj->set(-input => \$str, -output => 'temp.rls', -options => 'squeezed');
 
@@ -1048,6 +1080,9 @@ sub dock($\&) {
     local $MaxDepth = $self->get(-MaxDepth=>) if $self->has(-MaxDepth=>);
     local $SafeCppMode = $self->get(-SafeCppMode=>) if $self->has(-SafeCppMode=>);
     local $RoundScientific = $self->get(-RoundScientific=>) if $self->has(-RoundScientific=>);
+    local $DefaultCsvDelimiter = $self->get(-DefaultCsvDelimiter=>) if $self->has(-DefaultCsvDelimiter=>);
+    local $DefaultConfDelimiter = $self->get(-DefaultConfDelimiter=>) if $self->has(-DefaultConfDelimiter=>);
+    local $DefaultConfSeparator = $self->get(-DefaultConfSeparator=>) if $self->has(-DefaultConfSeparator=>);
     my $r = $block->();
     $Locked--;
     $r;
@@ -1069,13 +1104,13 @@ B<PARAMETERS>
 
 INPUT shall be either
 
-- some Rlist object created by F<L</new()>>,
+- some Rlist object created by F<L</new>()>,
 
-- a string reference, in which case F<read()> and F<L</read_string()>> parse Rlist text from it,
+- a string reference, in which case F<read()> and F<L</read_string>()> parse Rlist text from it,
 
 - a string scalar, in which case F<read()> assumes a file to open and to parse.
 
-See F<L</open_input()>> for details on the FILTER and FILTER-ARGS parameters, which are used to
+See F<L</open_input>()> for details on the FILTER and FILTER-ARGS parameters, which are used to
 preprocess input files before actually reading them.  When specified, and INPUT is an object, they
 overload the F<-filter> and F<-filter-args> attributes.
 
@@ -1092,30 +1127,83 @@ otherwise the result of calling F<hostname>. For F<read> this means
 
 B<RESULT>
 
-F<L</read()>> returns parsed data (reference) or F<undef> if there was no data (when the length of the
+F<L</read>()> returns parsed data (reference) or F<undef> if there was no data (when the length of the
 physical file is greater than zero it had only comments/whitespace). 
 
-See also F<L</parse()>>, F<L</write()>>, F<L</write_string()>>.
+See also F<L</parse>()>, F<L</write>()>, F<L</write_string>()>.
 
 =item F<read_csv(INPUT[, OPTIONS, FILTER, FILTER-ARGS])>
 
-B<PARAMETERS>
+=item F<read_conf(INPUT[, OPTIONS, FILTER, FILTER-ARGS])>
 
-See F<L</read()>> for INPUT and F<L</open_input()>> for FILTER and FILTER-ARGS (F<open_input()> is
-called internally).  For example, simply pass 1 as FILTER argument to read INPUT through the
-standard C preprocessor, instead of reading it directly.
+See F<L</read>()> for INPUT and F<L</open_input>()> for FILTER and FILTER-ARGS.  These functions
 
-The comma-delimiter is read from L<OPTIONS|/Compile Options>, as C<"delimiter">. It defaults to
-'\s*,\s*'.
+- read data from strings or files,
 
-B<RESULT>
+- use an optional delimiter,
 
-Returns a list of lists.  In list context a list of array references, in scalar context a reference
-to such a list.  Each embedded array defines the fields in a line, and may be of variable length.
+- ignore delimiters in quoted fields,
+
+- ignore empty lines,
+
+- ignore lines begun with F<#> as comments.
+
+F<L<read_conf>()> is a variant of F<L<read_csv>()> - the difference between both are the default
+value for C<"delimiter"> and C<"auto_quote">:
+
+	FUNCTION	DELIMITER	AUTO-QUOTING
+	read_csv()	'\s*,\s*'	no
+	read_conf()	'\s*=\s*'	yes
+
+The delimiter regexes are actually defined by the package-globals
+F<$Data::Rlist::DefaultCsvDelimiter> and F<$Data::Rlist::DefaultConfDelimiter>.  Note, however,
+that F<read_csv()> can be used as well for configuration files; use a delimiter of C<'\s+'>, to
+split the line at horizontal whitespace into multiple values (but not within quoted strings).
+
+Both functions return a list of lists.  Each embedded array defines the fields in a line, and may
+be of variable length.
+
+B<EXAMPLES>
+
+Un/qouting of values happens implicitly.  Given a file F<db.conf>
+
+	# Comment
+	SERVER		= hostname
+	DATABASE	= database_name
+	LOGIN		= "user:password"
+
+the call
+
+	$opts = Data::Rlist::read_conf('db.conf');
+
+returns (as F<$opts>)
+
+	[
+		[ 'SERVER', 'hostname' ],
+		[ 'DATABASE', 'database_name' ],
+		[ 'LOGIN', 'user:password' ]
+	]
+
+To convert such an array into a hash C<%conf>, use
+
+	%conf = map { @$_ } @{ReadConf 'db.conf'};
+
+The F<L<write_conf>()> function can be used to update F<db.conf> from F<$opts>, so that
+
+	push @$opts, [ 'MAGIC VALUE' => 3.14_15 ];
+
+	Data::Rlist::write_conf('db.conf', { precision => 2 });
+
+writes
+
+	SERVER = hostname
+	DATABASE = database_name
+	LOGIN = "user:password"
+	"MAGIC VALUE" = 3.14
 
 =item F<read_string(INPUT)>
 
-Calls F<L</read()>> to read Rlist language productions from the string or string-reference INPUT.
+Calls F<L</read>()> to read Rlist language productions from the string or string-reference INPUT.
 
 =back
 
@@ -1162,25 +1250,34 @@ sub read_csv($;$$$) {
     if (ref($input) eq __PACKAGE__) {
         # $input is an object created by Data::Rlist::new
         $input->dock
-        (sub {
-             $options ||= $input->get('options');
-             $fcmd ||= $input->get('filter');
-             $fcmdargs ||= $input->get('filter-args');
-             $input = $input->get('input');
-             Data::Rlist::read_csv($input, $options, $fcmd, $fcmdargs);
-         });
+		(sub {
+			 $options ||= $input->get('options');
+			 $fcmd ||= $input->get('filter');
+			 $fcmdargs ||= $input->get('filter-args');
+			 $input = $input->get('input');
+			 Data::Rlist::read_csv($input, $options, $fcmd, $fcmdargs);
+		 });
     } else {
         # $input is either a scalar or string-reference: we'll read linewise from a file or a
         # string now.  Note that in case of a string $$input, open_input splits at LF or CR+LF.
 
         return undef unless open_input($input, $fcmd, $fcmdargs);
         confess unless defined $Readstruct;
-        my $delim = complete_options($options, 'default')->{delimiter};
-        my @R;
-        push @R, [ parse_quoted($Ln, $delim) ] while lexln();
+        my $delim = complete_options($options)->{delimiter} || $DefaultCsvDelimiter;
+        my @L; push @L, $Ln while lexln();
+        my @R; push @R,
+		map { [ map { maybe_unquote($_) } split_quoted($_, $delim) ] } grep { not /^\s*#|^\s*$/o } @L;
         close_input();
-        return wantarray ? @R : \@R;
+        return \@R;
     }
+}
+
+sub read_conf(@) { 
+    my($input, $options, $fcmd, $fcmdargs) = @_;
+	$options ||= $input->get('options') if ref($input) eq __PACKAGE__;
+	$options = complete_options($options) unless ref $options; # expand using predef'd set "default"
+	$options->{delimiter} ||= $DefaultConfDelimiter;		   # ...where "delimiter" is undef
+	return read_csv($input, $options, $fcmd, $fcmdargs);
 }
 
 sub read_string($);
@@ -1200,7 +1297,7 @@ sub read_string($) {
 =item F<write(DATA[, OUTPUT, OPTIONS, HEADER])>
 
 Translates Perl data into some Rlist, i.e. into printable text.  DATA is either an object generated
-by F<L</new()>>, or some Perl data, or F<undef>.  F<write()> is auto-exported as F<L</WriteData()>>.
+by F<L</new>()>, or some Perl data, or F<undef>.  F<write()> is auto-exported as F<L</WriteData>()>.
 
 B<PARAMETERS>
 
@@ -1213,8 +1310,8 @@ defines some F<Data::Rlist> object.  Defines a filename to create, or some strin
 F<undef> writes to some anonymous string.
 
 Optional L<OPTIONS|/Compile Options> arguments defines how to L<compile|/compile> text from DATA.  Defaults to the
-F<-options> attribute when DATA is an object.  When uses F<L</compile_fast()>>, otherwise
-F<L</compile()>>.
+F<-options> attribute when DATA is an object.  When uses F<L</compile_fast>()>, otherwise
+F<L</compile>()>.
 
 Optional HEADER is a reference to an array of strings that shall be printed literally at the top of
 an output file. Defaults to the F<-header> attribute when DATA is an object.
@@ -1238,31 +1335,39 @@ B<EXAMPLES>
     print $self->make_string;               # Print $thing to stdout.
     print Data::Rlist::make_string($thing); # dto. applying the functional interface
 
-=item F<write_csv(DATA[, OUTPUT, OPTIONS, COLUMNS])>
+=item F<write_csv(DATA[, OUTPUT, OPTIONS, COLUMNS, HEADER])>
 
-Write DATA as CSV to file or string OUTPUT. 
+=item F<write_conf(DATA[, OUTPUT, OPTIONS, HEADER])>
 
-This function automatically quotes all fields that do not look like numbers (see
-F<L</is_numeric()>>).  Numbers are rounded to the specified precision.
+Write DATA as CSV to file or string OUTPUT.  These function automatically quote all fields that do
+not look like numbers (see F<L</is_numeric>()>).
 
-F<write_csv()> is auto-exported as F<L</WriteCSV()>>.
+F<write_conf()> writes configuration files where each line contains a tagname, a separator and a
+value.  F<write_csv()> uses a different default separator of C<",">, while F<write_conf()> uses C<"
+= ">.
 
 B<PARAMETERS>
 
-See F<L</write()>> for the DATA and OUTPUT parameters, which are semantically equal.  From L<OPTIONS|/Compile Options>
-is read the comma-separator (C<"comma">, default is C<",">), the linefeed (C<"eol_space">, default
-is C<"\n">) and the numeric precision (C<"precision">).
+See F<L</write>()> for the DATA and OUTPUT parameters, which are semantically equal.  From
+L<OPTIONS|/Compile Options> is read the comma-separator (C<"separator">), the linefeed
+(C<"eol_space">) and the numeric precision (C<"precision">).  COLUMNS, if specified, shall be an
+array-ref defining the column names to be written as the first line.  All strings in the array-ref
+HEADER are written as F<#>-comments before the data.
 
-COLUMNS, if specified, shall be an array-ref defining the column names to be written as the first
-line.
-
-Like with F<L</write()>>, unless DATA refers to some F<Data::Rlist> object, it shall define the data
-to be compiled.  But because of the limitations of CSV files the data may not be just any Perl
+Like with F<L</write>()>, unless DATA refers to some F<Data::Rlist> object, it shall define the
+data to be compiled.  But because of the limitations of CSV files the data may not be just any Perl
 data.  It must be a reference to an array of array references, where each contained array defines
 the fields, e.g.
 
     [ [ a, b, c ],      # line 1
       [ d, e, f, g ],   # line 2
+        .
+        .
+    ]
+
+Likewise, F<write_conf()> expects
+
+    [ [ tag, value ],	# line 1
         .
         .
     ]
@@ -1280,7 +1385,7 @@ Functional interface:
 
     WriteCSV($thing, "foo.dat");
 
-    WriteCSV($thing, "foo.dat", { comma => '; ' }, [qw/GBKNR VBKNR EL LaD LaD_V/]);
+    WriteCSV($thing, "foo.dat", { separator => '; ' }, [qw/GBKNR VBKNR EL LaD LaD_V/]);
 
     WriteCSV($thing, \$target_string);
 
@@ -1289,7 +1394,7 @@ Functional interface:
 Object-oriented interface:
 
     $object = new Data::Rlist(-data => $thing, -output => "foo.dat",
-                              -options => { comma => '; ' },
+                              -options => { separator => '; ' },
                               -columns => [qw/GBKNR VBKNR EL LaD LaD_V/]);
     $object->write_csv;     # Write $thing as CSV to foo.dat
     $object->write;         # Write $thing as Rlist to foo.dat
@@ -1299,7 +1404,7 @@ Object-oriented interface:
 
 =item F<write_string(DATA[, OPTIONS])>
 
-Like F<L</write()>> but always compiles to a new string to which it returns a reference.  In an
+Like F<L</write>()> but always compiles to a new string to which it returns a reference.  In an
 object this function does not use F<-output>, even when this attribute defines a string reference.
 It also won't use F<-options>. Instead it uses the predefined options set L<C<"string">|/Predefined
 Options> to render a very compact Rlist without newlines and here-docs.
@@ -1329,7 +1434,7 @@ B<EXAMPLES>
 
 =item F<keelhaul(DATA[, OPTIONS])>
 
-Do a deep copy of DATA according to L<OPTIONS|/Compile Options>.  DATA is some Perl data, or some F<L<Data::Rlist object|/new()>>.
+Do a deep copy of DATA according to L<OPTIONS|/Compile Options>.  DATA is some Perl data, or some F<L<Data::Rlist object|/new>()>.
 
 F<keelhaul()> works by first compile DATA to text, then restoring the data from the text.  The text
 had been carefully built according to certain L</Compile Options>. Hence, by "keelhauling data",
@@ -1357,7 +1462,7 @@ which copies F<$thing> into
     { foo => [0.0006, -0.0002] }
 
 All number scalars where rounded to 4 decimal places, so they're finally comparable as
-floating-point numbers (see F<L</equal()>> for a discussion), One can also convert all floats to
+floating-point numbers (see F<L</equal>()> for a discussion), One can also convert all floats to
 integers:
 
     $self = Data::Rlist->new(-data => $thing);
@@ -1381,7 +1486,7 @@ bodies, or dropped.
 =item *
 
 F<IO>, F<GLOB> and F<FORMAT> references have been converted into their plain typenames (see
-F<L</compile()>>).
+F<L</compile>()>).
 
 =item *
 
@@ -1393,7 +1498,7 @@ Compile options are considered, such as implicit rounding of floats.
 
 =item *
 
-Anything deeper than F<$Data::Rlist::MaxDepth> is thrown away (again, see F<L</compile()>>).
+Anything deeper than F<$Data::Rlist::MaxDepth> is thrown away (again, see F<L</compile>()>).
 
 =item *
 
@@ -1409,18 +1514,28 @@ consists of: strings and numbers.
 Get F<%Data::Rlist::PredefinedOptions{PREDEF-NAME}>.  PREDEF-NAME defaults to
 L<C<"default">|/Predefined Options>, the options for writing files.
 
-=item F<complete_options([OPTIONS[, PREDEF-NAME]])>
+=item F<complete_options([OPTIONS[, BASIC-OPTIONS]])>
 
-Completes L<OPTIONS|/Compile Options> (hash or name) using the predefined set PREDEF-NAME.
-(defaults to L<C<"default">|/Predefined Options>).  For example,
+Completes L<OPTIONS|/Compile Options> with BASIC-OPTIONS: all pairs not already in OPTIONS are
+copied from BASIC-OPTIONS (argument defaults to L<C<"default">|/Predefined Options>, the options
+for writing files).  Both arguments define hashes or a L<predefined options name|/Predefined
+Options>.
+
+Returns a new hash of L<compile options|/Compile Options>.  (Even when OPTIONS defines a hash it is
+copied into a new one.)
+
+B<EXAMPLES>
 
     complete_options({ precision => 0 }, 'squeezed')
 
-combines the predefined options for L<C<"squeezed">|/Predefined Options> text (no whitespace at
-all, no here-docs, numbers are rounded to a precision of 6) with a numeric precision of 0.  This
+merges the predefined options for L<C<"squeezed">|/Predefined Options> text (no whitespace at all,
+no here-docs, numbers are rounded to a precision of 6) with a numeric precision of 0.  This
 converts all floats to integers.
 
-Returns a reference to a new hash of L</Compile Options>.
+	complete_options($them, { delimiter => '\s+' })
+
+completes F<$them> by some other hash; but only keys not already in F<$them> are copied.  In fact,
+the latter is suitable for configuration files; see also F<L<read_conf>()>.
 
 =back
 
@@ -1429,30 +1544,27 @@ Returns a reference to a new hash of L</Compile Options>.
 sub predefined_options($) {
     my $name = shift || 'default';
     carp "\nunknown compile-options '$name'" unless exists $PredefinedOptions{$name};
-    my $r = $PredefinedOptions{$name};
-    wantarray ? (%$r) : $r;
+    $PredefinedOptions{$name};
 }
 
 sub complete_options(;$$);
 sub complete_options(;$$)
 {
     my($opts, $base) = (shift||'default', shift||'default');
-    carp "name expected as first argument" if ref $base;
-    unless (ref $opts) {
-        # Merge two predefined sets.
-        complete_options(predefined_options($opts), $base);
-    } else {
-        # Merge $base.
-        my $r = { %$opts };
-        my %pre = predefined_options($base);
-        while (my($k, $v) = each %pre) {
-            $r->{$k} = $v unless exists $r->{$k}
-        }
-        # Finally merge "default" and return.
-        $r = complete_options($r) unless $base eq 'default';
-        $r->{_base} = $base;
-        $r
-    }
+	my $using_default = ($base eq 'default');
+	$opts = predefined_options($opts) unless ref $opts;
+	$base = predefined_options($base) unless ref $base;
+
+	# Make a new hash, copy all keys not already in $opts from $base.
+	$opts = { %$opts };
+	$opts->{_base} = ref($base) ? 'some hash' : $base;
+	while (my($k, $v) = each %$base) {
+		$opts->{$k} = $v unless exists $opts->{$k}
+	}
+
+	# Finally complete $opts with "default" and return the new hash.
+	$opts = complete_options($opts) unless $using_default;
+	$opts
 }
 
 sub write($;$$$);
@@ -1486,6 +1598,9 @@ sub write($;$$$)
         } else {
             $optname = "custom, based on '${\($options->{_base} || 'default')}'";
         }
+		unless ($fast || $perl) {
+			$options->{auto_quote} = 1 unless defined $options->{auto_quote};
+		}
 
         unless ($to_string) {
             # Compile $data into a file named $output.
@@ -1555,11 +1670,11 @@ sub write($;$$$)
     }
 }
 
-sub write_csv($;$$$);
-sub write_csv($;$$$)
+sub write_csv($;$$$$);
+sub write_csv($;$$$$)
 {
     my($data, $output) = (shift, shift);
-    my($options, $columns) = @_;
+    my($options, $columns, $header) = @_;
     return 0 unless defined $data;
 
     if (ref($data) eq __PACKAGE__) {
@@ -1569,24 +1684,34 @@ sub write_csv($;$$$)
              $output ||= $data->get('-output');
              $options ||= $data->get('-options');
              $columns ||= $data->get('-columns');
-             Data::Rlist::write_csv($data->get('-data'), $output, $options, $columns);
+             $header ||= $data->get('-header');
+             Data::Rlist::write_csv($data->get('-data'), $output, $options, $columns, $header);
          });
     } else {
         # $data is some Perl data or undef.  In case of undef returns 0.  When the file could not
         # be created, dies. Otherwise returns 1.
+		#
+		# Unless a value looks like a number the value is quote()d.  read_csv() uses split_quoted()
+		# which keeps quotes and backslashes, then maybe_unquote()s each value.
 
         $options = complete_options($options, 'default');
         my $to_string = ref $output || not defined $output;
-        my($comma, $linefeed, $prec) = map { $options->{$_} } qw/comma eol_space precision/;
+        my($separator, $linefeed, $prec, $auto_quote) = map { $options->{$_} } qw/separator eol_space precision auto_quote/;
         my $result = '';
-        $result.= join($comma, @$columns).$linefeed if $columns;
+		$auto_quote = 0 unless defined $auto_quote; # by default quote all non-numbers
+        $result.= join($separator, @$columns).$linefeed if $columns;
         $result.= join($linefeed, map {
-            join($comma, map { is_numeric($_)
-                               ? (defined($prec) ? round($_, $prec) : $_)
-                               : quote($_) } @$_) } @$data) if @$data;
+            join($separator, map { is_numeric($_)
+								   ? (defined($prec) ? round($_, $prec) : $_)
+								   : ($auto_quote ? maybe_quote($_) : quote($_)) 
+							   } @$_) } @$data) if @$data;
 
         if ($to_string) {
-            $output = \$result if ref $output; \$result
+			if (ref $output) {
+				$$output = $result; return $output
+			} else {
+				return \$result;
+			}
         } else {
             my($to_stdout, $fh) = ($output eq '-');
             local $| = 1 if $DEBUG;
@@ -1596,10 +1721,21 @@ sub write_csv($;$$$)
                 (open($fh, ">$output") and flock($fh, 2)) or
                 confess("\nERROR: $output: can't create and lock CSV-file: $!");
             }
+			# TODO: write $header
             print $fh $result;
             close $fh; 1
         }
     }
+}
+
+sub write_conf($;$$$$)
+{
+    my($data, $output, $options, $header) = @_;
+	$options ||= $data->get('options') if ref($data) eq __PACKAGE__;
+	my $have_sep = ref($options) && defined $options->{separator};
+	$options = complete_options($options) unless ref $options;
+	$options->{separator} = $DefaultConfSeparator unless $have_sep;
+	return write_csv($data, $output, $options, $header);
 }
 
 sub write_string($;$) {
@@ -1644,8 +1780,8 @@ sub keelhaul($;$) {
 
 =item F<close_input()>
 
-Open/close Rlist text file or string INPUT for parsing. Used internally by F<L</read()>> and
-F<L</read_csv()>>.
+Open/close Rlist text file or string INPUT for parsing. Used internally by F<L</read>()> and
+F<L</read_csv>()>.
 
 B<PREPROCESSING>
 
@@ -1676,7 +1812,7 @@ B<SAFE CPP MODE>
 
 This slightly esoteric mode involves F<sed> and a temporary file.  It is enabled by setting
 F<$Data::Rlist::SafeCppMode> to 1 (the default).  It protects single-line F<#>-comments when FILTER
-begins with either F<gcc>, F<g++> or F<cpp>.  F<L</open_input()>> then additionally runs F<sed> to
+begins with either F<gcc>, F<g++> or F<cpp>.  F<L</open_input>()> then additionally runs F<sed> to
 convert all input lines beginning with whitespace plus the F<#> character. Only the following
 F<cpp>-commands are excluded, and only when they appear in column 1:
 
@@ -1689,7 +1825,7 @@ F<cpp>-commands are excluded, and only when they appear in column 1:
 For all other lines F<sed> converts F<#> into F<##>. This prevents the C preprocessor from
 evaluating them.  But because of Perl's limited F<open()> function, which isn't able to open
 arbitary pipes, the invocation of F<sed> requires a temporary file. The file is simply created by
-appending C<".tmp"> to the pathname passed in INPUT.  F<L</lexln()>>, the function that feeds the
+appending C<".tmp"> to the pathname passed in INPUT.  F<L</lexln>()>, the function that feeds the
 lexical scanner with lines, then converts F<##> back into comment lines.
 
 Alternately, use F<//> and F</* */> comments and set F<$Data::Rlist::SafeCppMode> to 0.
@@ -1808,7 +1944,7 @@ sub close_input()
 
 =item F<lex()>
 
-Lexical scanner.  Called by F<L</parse()>> to split the current line into tokens.  F<lex()> reads
+Lexical scanner.  Called by F<L</parse>()> to split the current line into tokens.  F<lex()> reads
 F<#> or F<//> single-line-comment and F</* */> multi-line-comment as regular white-spaces.
 Otherwise it returns tokens according to the following table:
 
@@ -1838,7 +1974,7 @@ here-doc-equivalent.
 
 =item F<lexln()>
 
-Read the next line of text from the input.  Return 0 if F<L</at_eof()>>, 1 otherwise.
+Read the next line of text from the input.  Return 0 if F<L</at_eof>()>, 1 otherwise.
 
 =item F<at_eof()>
 
@@ -1847,7 +1983,7 @@ Return true if current input file / string array is exhausted, false otherwise.
 =item F<parse()>
 
 Read Rlist language productions from current input, defined by package variables.  This is a fast,
-non-recursive parser driven by the parser map F<%Data::Rlist::Rules>.  See also F<L</lex()>>.
+non-recursive parser driven by the parser map F<%Data::Rlist::Rules>.  See also F<L</lex>()>.
 
 =back
 
@@ -1857,22 +1993,22 @@ non-recursive parser driven by the parser map F<%Data::Rlist::Rules>.  See also 
 
 =item F<errors([SELF])>
 
-Returns the number of syntax errors that occurred in the last call to F<L</parse()>>.  When called
+Returns the number of syntax errors that occurred in the last call to F<L</parse>()>.  When called
 as method (i.e. SELF is defined) returns the number of syntax errors that occured for the last time
-an object had called F<L</read()>>.
+an object had called F<L</read>()>.
 
 =item F<broken([SELF])>
 
-Return the number of times the last F<L</compile()>> crossed the zenith of
+Return the number of times the last F<L</compile>()> crossed the zenith of
 F<$Data::Rlist::MaxDepth>. When called as method returns the information for the last time an
-object had called F<L</read()>>.
+object had called F<L</read>()>.
 
 =item F<missing_input([SELF])>
 
-Return true when the last call to F<L</parse()>> yielded F<undef> because there was nothing to
+Return true when the last call to F<L</parse>()> yielded F<undef> because there was nothing to
 parse.  Otherwise, when F<parse()> returned F<undef>, this means there was some syntax error.
-F<parse()> is called internally by F<L</read()>>.  When called as method returns the information
-for the last time an object had called F<L</read()>>.
+F<parse()> is called internally by F<L</read>()>.  When called as method returns the information
+for the last time an object had called F<L</read>()>.
 
 =back
 
@@ -2243,7 +2379,7 @@ In core this proxy is a hash-table, hence another way to say F<\*foo> is F<*foo{
 eventually refers to C<"foo">'s incarnation as typeglob C<*foo>.
 
 In other words: with typeglobs you reach the bedrock of F<perl>, where the spade bends back.  Note,
-however, that after calling F<L</compile()>> typeglob-refs have gone up in smoke.
+however, that after calling F<L</compile>()> typeglob-refs have gone up in smoke.
 
 =item F<undef>
 
@@ -2254,7 +2390,7 @@ F<undef>'d values in arrays are compiled into the default Rlist C<"">.
 =cut
 
 our($Datatype, $K, $V);
-our($Outline_data, $Outline_hashes, $Code_refs, $Here_docs, $Precision);
+our($Outline_data, $Outline_hashes, $Code_refs, $Here_docs, $Auto_quote, $Precision);
 our($Eol_space, $Paren_space, $Bol_tabs, $Comma_punct, $Semicolon_punct, $Assign_punct);
 
 sub compile($;$$)
@@ -2270,9 +2406,9 @@ sub compile($;$$)
              comma_punct semicolon_punct assign_punct/;
 
     local($Outline_data, $Outline_hashes,
-          $Code_refs, $Here_docs, $Precision) = map { $options->{$_} }
+          $Code_refs, $Here_docs, $Auto_quote, $Precision) = map { $options->{$_} }
           qw/outline_data outline_hashes
-             code_refs here_docs precision/;
+             code_refs here_docs auto_quote precision/;
 
     return compile1($data) unless $Fh; # return string-reference
     return compile2($data);     # return 1
@@ -2292,6 +2428,8 @@ sub compval($) {
     my $v = shift;
     if (defined $v) {
         if ($v !~ $g_re_value) {
+			# Not an identifier, number or quoted string.  Hence $v will be quoted, and maybe as
+			# here-doc.
             if ($Here_docs) {
                 if ($v =~ /\n.+\n$/) {
                     # Here-docs enabled and $v qualifies: it has at least two newlines, and a final
@@ -2314,9 +2452,19 @@ sub compval($) {
             } else {
                 $v = quote($v)
             }
-        } elsif (defined $Precision) { # round floats?
-            $v = round($v, $Precision) if $v =~ $g_re_float
-        }
+        } elsif (ord($v) != 34) {
+			# Not already quoted.  Either $v is a number or a symbolic name.
+			if ($Auto_quote) {
+				if ($v =~ $g_re_float) {
+					$v = round($v, $Precision) if defined $Precision;
+				} else {
+					die $v unless $v =~ $g_re_name;
+					$v = qq("$v");
+				}
+			} elsif (defined $Precision) {
+				$v = round($v, $Precision) if $v =~ $g_re_float;
+			}
+		}
     } $v
 }
 
@@ -2510,7 +2658,7 @@ F<SCALAR>, F<HASH>, F<ARRAY> and F<REF> are compiled into text, whether blessed 
 F<GLOB>, F<IO> and F<FORMAT> are compiled as C<"?CODE?">, C<"?IO?">, C<"?GLOB?"> and C<"?FORMAT?">.
 F<undef> values in arrays are compiled into the default Rlist C<"">.
 
-The main difference to F<L</compile()>> is that F<compile_fast()> considers no L<compile
+The main difference to F<L</compile>()> is that F<compile_fast()> considers no L<compile
 options|/Compile Options>. Thus it cannot call code, implicitly round numbers etc., and cannot
 detect recursively-defined data.
 
@@ -2678,8 +2826,8 @@ sub compile_Perl1($)
 =head1 AUXILIARY FUNCTIONS
 
 The utility functions in this section are generally useful when handling stringified data.  These
-functions are either very fast, or smart, or both.  For example, F<L</quote()>>, F<L</unquote()>>,
-F<L</escape()>> and F<L</unescape()>> internally use precompiled regexes and precomputed ASCII
+functions are either very fast, or smart, or both.  For example, F<L</quote>()>, F<L</unquote>()>,
+F<L</escape>()> and F<L</unescape>()> internally use precompiled regexes and precomputed ASCII
 tables; so employing these functions is probably faster then using own variants.
 
 =head2 F<is_numeric()>, F<is_name()> and F<is_random_text()>
@@ -2730,21 +2878,21 @@ C<"."> cannot be used as first character, since it could also begin a number.
 =item F<is_random_text(SCALAR-REF)>
 
 F<is_random_text()> returns true if the scalar is neither a symbolic name nor a number, nor is
-double-quoted.  When this function returns true, then F<L</compile()>> and F<L</compile_fast()>>
-would call F<L</quote()>> on the scalar.  In Rlists, all scalars need to be quoted, expect those
+double-quoted.  When this function returns true, then F<L</compile>()> and F<L</compile_fast>()>
+would call F<L</quote>()> on the scalar.  In Rlists, all scalars need to be quoted, expect those
 that are
 
 - already quoted,
 
-- look like C identifiers or L<symbolic names|/is_name()>,
+- look like C identifiers or L<symbolic names|/is_name>(),
 
-- look like C L<number constants|/is_numeric()>.
+- look like C L<number constants|/is_numeric>().
 
 Warning: F<is_random_text()> makes no further test whether a string consists of characters that
 actually require escaping. That is, it returns also true on strings that do not adhere to
 7-bit-ASCII, by defining characters <32 and >127.
 
-See also F<L</is_numeric()>> and F<L</is_name()>>.
+See also F<L</is_numeric>()> and F<L</is_name>()>.
 
 =back
 
@@ -2782,11 +2930,15 @@ F<escape()> returns C<\"Fr\374her Mittag\012\">
 Return F<quote(TEXT)> if F<L</is_random_text(TEXT)>>; otherwise (TEXT defines a symbolic name or
 number) return TEXT.
 
+=item F<maybe_unquote(TEXT)>
+
+Return F<unquote(TEXT)> when the first character of TEXT is C<">; otherwise returns TEXT.
+
 =item F<unquote(TEXT)>
 
 =item F<unescape(TEXT)>
 
-Reverses F<L</quote()>> and F<L</escape()>>.
+Reverses F<L</quote>()> and F<L</escape>()>.
 
 =item F<unhere(HERE-DOC-STRING[, COLUMNS, FIRSTTAB, DEFAULTTAB])>
 
@@ -2873,9 +3025,8 @@ BEGIN {
     $g_escaped_nonprintables{chr(92)} = chr(92);
 }
 
-sub maybe_quote($) {
-    is_random_text($_[0]) ? quote($_[0]) : $_[0]
-}
+sub maybe_quote($) { is_random_text($_[0]) ? quote($_[0]) : $_[0] }
+sub maybe_unquote($) { ord($_[0]) == 34 ? unquote($_[0]) : $_[0] }
 
 sub quote($) {
     # Escape, then add quotes (the below expression is faster than qq).
@@ -2943,10 +3094,11 @@ to split (default: C<'\s+'>).  The function won't split at DELIMITERs inside quo
 backslashed.  For example, to split INPUT at commas use C<'\s*,\s*'>.
 
 F<parse_quoted()> works like F<split_quoted()> but additionally removes all quotes and backslashes
-from the splitted fields.  Both functions effectively simplify the interface of
-F<Text::ParseWords>.  In an array context both return a list of substrings, otherwise the count of
-substrings. An empty array is returned in case of unbalanced C<"> quotes, e.g.
-F<split_quoted(C<foo,"bar>)> returns F<()>.
+from the splitted fields.
+
+Both functions effectively simplify the interface of F<Text::ParseWords>.  In an array context they
+return a list of substrings, otherwise the count of substrings. An empty array is returned in case
+of unbalanced C<"> quotes, e.g.  F<split_quoted(C<foo,"bar>)>.
 
 B<EXAMPLES>
 
@@ -3038,7 +3190,7 @@ Here is some more complete code to parse a F<.csv>-file with quoted fields, esca
     die q(unbalanced " in input) unless @lines;
     my @table = map { [ map { parse_quoted($_, '\s*,\s') } ] } @lines
 
-Note, however, that the F<L</read_csv()>> function already reads F<.csv>-file perfectly well.
+Note, however, that the F<L</read_csv>()> function already reads F<.csv>-file perfectly well.
 
 A nice way to make sure what F<split_quoted()> and F<parse_quoted()> return is using
 F<deep_compare()>.  For example, the following code shall never die:
@@ -3046,7 +3198,7 @@ F<deep_compare()>.  For example, the following code shall never die:
     croak if deep_compare([split_quoted("fee fie foo")], ['fee', 'fie', 'foo']);
     croak if deep_compare( parse_quoted('"fee fie foo"'), 1);
 
-The 2nd call to F<L</parse_quoted()>> happens in scalar context, hence shall return 1 because
+The 2nd call to F<L</parse_quoted>()> happens in scalar context, hence shall return 1 because
 there's one string to parse.
 
 =back
@@ -3077,7 +3229,7 @@ sub parse_quoted($;$) {
 
 =item F<round(NUM1[, PRECISION])>
 
-Compare and round floating-point numbers. F<L</equal()>> returns true if NUM1 and NUM2 are equal to
+Compare and round floating-point numbers. F<L</equal>()> returns true if NUM1 and NUM2 are equal to
 PRECISION (default: 6) number of decimal places.  NUM1 and NUM2 are string- or number scalars.
 
 Normally F<round()> will return a number in fixed-point notation.  When the package-global
@@ -3094,7 +3246,7 @@ yields 2.00607e+09, which looses digits.
 
 B<MACHINE ACCURACY>
 
-One needs F<L</equal()>> to compare floats because IEEE 754 single- and double precision
+One needs F<L</equal>()> to compare floats because IEEE 754 single- and double precision
 implementations are not absolute - in contrast to the numbers they represent.  In all machines
 non-integer numbers are only an approximation to the numeric truth.  In other words, they're not
 commutative! For example, given two floats F<a> and F<b>, the result of F<a+b> might be different
@@ -3181,8 +3333,8 @@ element in B is a reference to a reference. Next it says that C<"Greetings, eart
 be compared because the corresponding element in B is a code reference. (One could assert, however,
 that the actual opacity here is that F<they> speak ASCII.)
 
-Actually, A and B are identical. B was written to disk (by F<L</write()>>)and then read back as A
-(by F<L</read()>>).  So, why don't they compare anymore?  Because in B the refs F<REF(0x7f224)> and
+Actually, A and B are identical. B was written to disk (by F<L</write>()>)and then read back as A
+(by F<L</read>()>).  So, why don't they compare anymore?  Because in B the refs F<REF(0x7f224)> and
 F<CODE(0x7f2fc)> hide
 
     \"String literal"
@@ -3266,8 +3418,10 @@ sub deep_compare($$;$$$)
             if (defined $prec) {
                 $a = round($a, $prec);
                 $b = round($b, $prec);
-            }
-            $prec = " (precision=$prec)" if defined $prec;
+				$prec = " (precision=$prec)";
+            } else {
+				$prec = " (precision=none)";
+			}
             unless (equal($a, $b)) {
                 $result->("unequal numbers$prec")
             } elsif ($dump) {
@@ -3415,21 +3569,21 @@ separately from F<Data::Rlist>.
 
 =item F<:floats>
 
-Imports F<L</equal()>>, F<L</round()>> and F<L</is_numeric()>>.
+Imports F<L</equal>()>, F<L</round>()> and F<L</is_numeric>()>.
 
 =item F<:strings>
 
-Imports F<L</maybe_quote()>>, F<L</quote()>>, F<L</escape()>>, F<L</unquote()>>, F<L</unescape()>>,
-F<L</unhere()>>, F<L</is_random_text()>>, F<L</is_numeric()>>, F<L</is_name()>>, F<L</split_quoted()>>, and
-F<L</parse_quoted()>>.
+Imports F<L</maybe_quote>()>, F<L</quote>()>, F<L</escape>()>, F<L</unquote>()>, F<L</unescape>()>,
+F<L</unhere>()>, F<L</is_random_text>()>, F<L</is_numeric>()>, F<L</is_name>()>, F<L</split_quoted>()>, and
+F<L</parse_quoted>()>.
 
 =item F<:options>
 
-Imports F<L</predefined_options()>> and F<L</complete_options()>>.
+Imports F<L</predefined_options>()> and F<L</complete_options>()>.
 
 =item F<:aux>
 
-Imports F<L</deep_compare()>>, F<L</fork_and_wait()>> and F<L</synthesize_pathname()>>.
+Imports F<L</deep_compare>()>, F<L</fork_and_wait>()> and F<L</synthesize_pathname>()>.
 
 =back
 
@@ -3465,13 +3619,17 @@ This code finds F<Rlist.pm> also in F<.> and F<~/bin>.  It then calls the F<Expo
 
 =over
 
-=item F<ReadCSV(INPUT[, DELIMITER, FILTER, FILTER-ARGS])>
+=item F<ReadCSV(INPUT[, OPTIONS, FILTER, FILTER-ARGS])>
 
-Calls F<L</read_csv()>>.
+Another way to call F<Data::Rlist::L</read_csv>()>.
+
+=item F<ReadConf(INPUT[, OPTIONS, FILTER, FILTER-ARGS])>
+
+Another way to call F<Data::Rlist::L</read_conf>()>.
 
 =item F<ReadData(INPUT[, FILTER, FILTER-ARGS])>
 
-Calls F<L</read()>>.
+Another way to call F<Data::Rlist::L</read>()>.
 
 =back
 
@@ -3479,13 +3637,17 @@ Calls F<L</read()>>.
 
 =over
 
-=item F<WriteCSV(DATA[, OUTPUT, OPTIONS, COLUMNS])>
+=item F<WriteCSV(DATA[, OUTPUT, OPTIONS, COLUMNS, HEADER])>
 
-Calls F<L</write_csv()>>.
+Another way to call F<Data::Rlist::L</write_csv>()>.
+
+=item F<WriteConf(DATA[, OUTPUT, OPTIONS, HEADER])>
+
+Another way to call F<Data::Rlist::L</write_conf>()>.
 
 =item F<WriteData(DATA[, OUTPUT, OPTIONS, HEADER])>
 
-Calls F<L</write()>>.
+Another way to call F<Data::Rlist::L</write>()>.
 
 =back
 
@@ -3499,16 +3661,22 @@ Calls F<L</write()>>.
 
 =item F<SqueezeData(DATA[, OPTIONS])>
 
-Calls F<L</make_string()>>.
+Another way to call F<Data::Rlist::L</make_string>()>.
 
 F<OutlineData()> applies the predefined L<C<"outlined">|/Predefined Options> L<options set|/Compile
-Options>, while F<StringizeData()> applies L<C<"string">|/Predefined Options> and F<SqueezeData()>
+Options>, while F<StringizeData()> applies L<C<"string">|/Predefined Options> and F<SqueezeData>()
 L<C<"squeezed">|/Predefined Options>.  When specified, L<OPTIONS|/Compile Options> are merged into
 the predefined set.  For example,
 
     print "\n\$thing: ", OutlineData($thing, { precision => 12 });
 
-L<rounds|/round()> all numbers in F<$thing> to 12 digits.
+L<rounds|/round>() all numbers in F<$thing> to 12 digits.
+
+=item F<PrintData(DATA[, OPTIONS])>
+
+Another way to say
+
+	print OutlineData(DATA, OPTIONS);
 
 =back
 
@@ -3518,7 +3686,7 @@ L<rounds|/round()> all numbers in F<$thing> to 12 digits.
 
 =item F<KeelhaulData(DATA[, OPTIONS])>
 
-Calls F<L</keelhaul()>>.  For example,
+Calls F<L</keelhaul>()>.  For example,
 
     use Data::Rlist;
         .
@@ -3527,15 +3695,20 @@ Calls F<L</keelhaul()>>.  For example,
 
 =item F<CompareData(A, B[, PRECISION, PRINT_TO_STDOUT])>
 
-Calls F<L</deep_compare()>>.
+Calls F<L</deep_compare>()>.
 
 =back
 
 =cut
 
 sub ReadCSV($;$$$) {
-    my($input, $delim, $fcmd, $fcmdargs) = @_;
-    Data::Rlist::read_csv($input, $delim, $fcmd, $fcmdargs);
+    my($input, $options, $fcmd, $fcmdargs) = @_;
+    Data::Rlist::read_csv($input, $options, $fcmd, $fcmdargs);
+}
+
+sub ReadConf($;$$$) {
+    my($input, $options, $fcmd, $fcmdargs) = @_;
+    Data::Rlist::read_conf($input, $options, $fcmd, $fcmdargs);
 }
 
 sub ReadData($;$$) {
@@ -3543,9 +3716,14 @@ sub ReadData($;$$) {
     Data::Rlist::read($input, $fcmd, $fcmdargs);
 }
 
-sub WriteCSV($;$$$) {
+sub WriteCSV($;$$$$) {
+    my($data, $output, $options, $columns, $header) = @_;
+    Data::Rlist::write_csv($data, $output, $options, $columns, $header);
+}
+
+sub WriteConf($;$$$) {
     my($data, $output, $options, $header) = @_;
-    Data::Rlist::write_csv($data, $output, $options, $header);
+    Data::Rlist::write_conf($data, $output, $options, $header);
 }
 
 sub WriteData($;$$$) {
@@ -3649,14 +3827,14 @@ can be simply F<eval>'d. Rlists are not Perl-syntax and need to be parsed carefu
 text is portable (7-bit-ASCII with non-printables escaped) and implementations exist for other
 programming languages, namely C++ which uses a fast flex/bison-parser.
 
-While reading F<Data::Dumper>-generated files back is generally faster than F<L</read()>>.  For
+While reading F<Data::Dumper>-generated files back is generally faster than F<L</read>()>.  For
 example, with F<$Data::Dumper::Useqq> enabled, it was observed that F<Data::Dumper> renders output
-three to four times slower than F<L</compile()>>
+three to four times slower than F<L</compile>()>
 
 Consider also that F<Data::Rlist> tests for any scalar whether it is numeric or not (see
-F<L</is_random_text()>>), where F<Data::Dumper> simply quotes any number and string.  So
+F<L</is_random_text>()>), where F<Data::Dumper> simply quotes any number and string.  So
 F<Data::Rlist> is able to implicitly round floats to a certain precision, making them finally
-comparable (see F<L</round()>> for more information).
+comparable (see F<L</round>()> for more information).
 
 F<Data::Rlist> generates much smaller files: with the default F<$Data::Dumper::Indent> of 2 Rlist
 output is just 15-20% of the size the F<Data::Dumper> package prints (for the same data).  The
@@ -3707,13 +3885,13 @@ IEEE 754 notations of Infinite and NaN not yet implemented.
 
 =item *
 
-To increase compilation speed, a string F<$s> is only F<L</quote()>>d when
-F<$s!~$Data::Rlist::g_re_value>. (Note that this regex is applied also by F<L</is_random_text()>>.)
+To increase compilation speed, a string F<$s> is only F<L</quote>()>d when
+F<$s!~$Data::Rlist::g_re_value>. (Note that this regex is applied also by F<L</is_random_text>()>.)
 The regex checks wether F<$s> begins with C<">, or defines a symbolic name or a number.  But when
 the 1st character of F<$s> is C<">, no further test are made whether characters in the actually
 require escaping.  It is then believed that the string adheres to 7-bit-ASCII.  If this isn't the
-case it might not be read back correctly.  See also F<L</is_name()>>, F<L</is_integer()>> and
-F<L</is_numeric()>>.
+case it might not be read back correctly.  See also F<L</is_name>()>, F<L</is_integer>()> and
+F<L</is_numeric>()>.
 
 =back
 

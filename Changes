@@ -1,6 +1,6 @@
 Revision history for Perl extension Data::Rlist.
 
-1.33-36  Tue Nov  6 21:58:07 2007
+1.33-37  Tue Nov  6 21:58:07 2007
 	- original version; created by h2xs 1.23 with options
 		-A -X -b 5.6.0 -n Data::Rlist
 	- uploaded to CPAN 2007-12-04

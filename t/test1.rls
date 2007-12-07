@@ -3,13 +3,13 @@
 #
 # Recursive Lists (Rlist) data file.  Just some arbitary data.
 #
-# $Writestamp: 2007-12-03 19:18:26 eh2sper$
+# $Writestamp: 2007-12-05 17:41:18 eh2sper$
 #
 
 {
     data = 
     {
-     CL_40060015 = 
+     40060015 = 
      (
 	  1005906, 
       Bund, 
@@ -98,7 +98,7 @@
 	 {
 	  MVM = 
 	  {quantile_error_estimation = 0;
-	   std_dev = 738869628.19904708862305;
+	   std_dev = 138869628.19904708862305;
 	   std_dev_diff = 0.00471064271365;
 	   true_EL_correlated_diff = 0.00062517100150;
 	  };

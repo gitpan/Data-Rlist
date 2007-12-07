@@ -16,8 +16,7 @@
 Sample code literally copied from Rlist.pm; this here-doc is eventually used as the
 key string.
 EOF
-			 "Famous words" =
-			 {
+			 "Famous words" = {
 				 foobar = <<HERE; # value as here-document
 [JARGON] A widely used metasyntactic variable; see foo for etymology.  Probably
 originally propagated through DECsystem manuals [...] in 1960s and early 1970s;

@@ -5,7 +5,7 @@
 # See Acme::EyeDrops,
 # <http://search.cpan.org/~asavige/Acme-EyeDrops-1.51/lib/Acme/EyeDrops.pm>.
 #
-# $Writestamp: 2007-12-03 23:45:37 andreas$
+# $Writestamp: 2007-12-05 19:43:16 eh2sper$
 # $Compile: perl -M'constant standalone => 1' camel.t$
 
 use warnings;
@@ -13,7 +13,7 @@ use strict;
 use constant;
 use Test;
 
-BEGIN { plan tests => 2 }
+BEGIN { plan tests => 8 }
 BEGIN { unshift @INC, '../lib' if $constant::declared{'main::standalone'} }
 
 use Data::Rlist;
@@ -133,10 +133,14 @@ BUFFY
 	);
 
 
-	my $obj = new Data::Rlist(-data => \%foo);
-	my $bar = KeelhaulData(\%foo);
-	ok(not CompareData(\%foo, $bar));
-	ok(not CompareData(\%foo, $obj->keelhaul));
+	for my $here_docs (0..1) {
+		for my $auto_quote (0..1) {
+			my $obj = new Data::Rlist(-data => \%foo, -options => { auto_quote => $auto_quote, here_docs => $here_docs });
+			my $bar = KeelhaulData(\%foo);
+			ok(not CompareData(\%foo, $bar));
+			ok(not CompareData(\%foo, $obj->keelhaul));
+		}
+	}
 }
 
 ### Local Variables:
