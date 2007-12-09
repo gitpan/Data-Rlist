@@ -4,7 +4,7 @@
 #
 # Test .csv/conf-files.
 #
-# $Writestamp: 2007-12-05 20:11:20 eh2sper$
+# $Writestamp: 2007-12-05 22:15:49 andreas$
 # $Compile: perl -M'constant standalone => 1' csv.t$
 
 use warnings;
@@ -82,9 +82,9 @@ our $temp;
 		ok(not CompareData(KeelhaulData($obj1->read_conf), \@org));
 
 	}
-
-	#unlink $tempfile;
 }
+
+unlink $tempfile;
 
 ### Local Variables:
 ### buffer-file-coding-system: iso-latin-1

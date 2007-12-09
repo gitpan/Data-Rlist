@@ -4,6 +4,7 @@ Makefile.PL
 MANIFEST
 README
 Rlist.pm.html
+t/binary.t
 t/camel.t
 t/csv.t
 t/Data-Rlist.t

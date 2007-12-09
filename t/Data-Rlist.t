@@ -5,13 +5,13 @@
 # Before `make install' is performed this script should be runnable with `make
 # test'. After `make install' it should work as `perl Data-Rlist.t'
 #
-# $Writestamp: 2007-12-04 00:39:20 andreas$
+# $Writestamp: 2007-12-07 19:26:22 eh2sper$
 # $Compile: perl -M'constant standalone => 1' Data-Rlist.t$
 
 use warnings;
 use strict;
 use constant file_IO => 2;
-use constant quote_and_escape => 16;
+use constant quote_and_escape => 19;
 use constant beyond_the_means => 9;
 use Test;
 BEGIN { plan tests => 3 + file_IO + quote_and_escape + beyond_the_means, todo => [ ] };
@@ -31,6 +31,8 @@ ok(1);							# module loaded OK
 if (quote_and_escape) {
 	my($i);
 	use Data::Rlist qw/:strings deep_compare/;
+
+	ok(is_value($_)) foreach qw/0 foo 3.14/;
 
 	ok(quote(undef) eq '""');
 	ok(quote(0) eq quote("0"));		   # ...dto

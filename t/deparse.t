@@ -16,7 +16,7 @@
 #	Can't call method "name" on an undefined value at
 #	/usr/local/lib/perl5/5.8.4/sun4-solaris/B/Deparse.pm line 948.
 #
-# $Writestamp: 2007-12-05 19:47:47 eh2sper$
+# $Writestamp: 2007-12-07 18:43:25 eh2sper$
 # $Compile: perl -M'constant standalone => 1' deparse.t$
 
 use warnings;
@@ -65,12 +65,12 @@ our $tempfile = "$0.tmp";
 									  -input => $tempfile,
 									  -output => $tempfile,
 									  -options => { auto_quote => $auto_quote, here_docs => $here_docs });
-			ok($obj->write);
-			ok(not CompareData(\%bodies, $obj->read));
+			die unless ok($obj->write);
+			die unless ok(not CompareData(\%bodies, $obj->read));
 		}
 	}
 
-	#unlink $tempfile;
+	unlink $tempfile;
 }
 
 ### Local Variables:

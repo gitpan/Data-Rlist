@@ -4,7 +4,7 @@
 #
 # Test reading/writinge non-existing files and empty data.
 #
-# $Writestamp: 2007-12-05 16:17:41 eh2sper$
+# $Writestamp: 2007-12-05 22:10:55 andreas$
 # $Compile: perl -M'constant standalone => 1' void.t$
 
 use warnings;
@@ -47,6 +47,8 @@ our $tempfile = "$0.tmp";
 	ok(exists ReadData(\"-x ")->{-x});
 	ok(ReadData(\"x = 5;")->{x} == 5);
 }
+
+unlink $tempfile;
 
 ### Local Variables:
 ### buffer-file-coding-system: iso-latin-1

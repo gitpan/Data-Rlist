@@ -4,7 +4,7 @@
 #
 # This test compares two Rlists compiled with different compile options.
 #
-# $Writestamp: 2007-12-05 19:58:25 eh2sper$
+# $Writestamp: 2007-12-07 19:27:09 eh2sper$
 # $Compile: perl -M'constant standalone => 1' round.t$
 
 use warnings;
@@ -14,9 +14,12 @@ use Test;
 BEGIN { plan tests => 7 + 1203 }
 BEGIN { unshift @INC, '../lib' if $constant::declared{'main::standalone'} }
 
+use Benchmark;
 use Data::Rlist qw/:options/;
 
+our $t0 = new Benchmark;
 our $Pi = 3.14159_26535_89793_23846_26433_83279_50288_41971_69399_37510;
+our $tempfile = "$0.tmp";
 
 #########################
 
@@ -83,7 +86,6 @@ ___
 	our($prea, $preb,  $scntfc, $oo, $prec, $to_string);
 	our($opta, $optb);
 	our @predefd = qw/default string squeezed outlined fast/;
-	our $tempfile = "$0.tmp";
 	our $obj;
 	our $stop = sub($$) { 
 		die "$_[0] != $_[1]   $prea<=>$preb  oo=$oo  prec=$prec  ${\($scntfc ? 'scientific' : '')}\n"
@@ -179,6 +181,11 @@ ___
 		}
 	}
 }
+
+print "runtime: ", timestr(timediff(new Benchmark,$t0)), "\n\n"
+if $constant::declared{'main::standalone'};
+
+unlink $tempfile;
 
 ### Local Variables:
 ### buffer-file-coding-system: iso-latin-1
