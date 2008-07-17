@@ -1,7 +1,7 @@
-Data-Rlist version 1.36
+Data-Rlist version 1.39
 =======================
 
-$Writestamp: 2007-12-04 13:02:53 andreas$
+$Writestamp: 2008-01-02 16:17:27 eh2sper$
 
 ABOUT
 
@@ -35,7 +35,7 @@ The Rlist C/C++ library can be downloaded from <http://www.visualco.de>.
 
 COPYRIGHT AND LICENCE
 
-Copyright (C) 1998-2007 by Andreas Spindler
+Copyright (C) 1998-2008 by Andreas Spindler
 
 Mail to <rlist@visualco.de>
 

@@ -3,7 +3,7 @@
 #
 # Recursive Lists (Rlist) data file.  Just some arbitary data.
 #
-# $Writestamp: 2007-12-05 17:41:18 eh2sper$
+# $Writestamp: 2008-07-17 17:25:04 eh2sper$
 #
 
 {
@@ -116,7 +116,7 @@
 	  };
 	 };
 	 economic-capital = 
-	 {analytical-expected-loss = 1074914515.82486724853516;
+	 {analytical-expected-loss = (1074914515.82486724853516);
 	  correlated = 
 	  {expected-loss = 1074242510.44048714637756;
 	   quantiles = 
@@ -202,8 +202,7 @@ ___
 		"Audiatur et altera pars!" =
 	 "Es m\366ge auch die andere Seite geh\366rt werden.";
 		"Memento mori" =
-	 "Bedenke, dass du sterben wirst.";
-		"Nosce te ipsum." =
-	 "Erkenne dich selbst!";
+ "Bedenke, dass du sterben wirst.";
+		"Nosce te ipsum." = "Erkenne dich selbst!";
 	};
 }

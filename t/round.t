@@ -4,7 +4,7 @@
 #
 # This test compares two Rlists compiled with different compile options.
 #
-# $Writestamp: 2007-12-07 19:27:09 eh2sper$
+# $Writestamp: 2007-12-12 16:39:05 eh2sper$
 # $Compile: perl -M'constant standalone => 1' round.t$
 
 use warnings;
@@ -18,8 +18,8 @@ use Benchmark;
 use Data::Rlist qw/:options/;
 
 our $t0 = new Benchmark;
-our $Pi = 3.14159_26535_89793_23846_26433_83279_50288_41971_69399_37510;
 our $tempfile = "$0.tmp";
+our $Pi = 3.14159_26535_89793_23846_26433_83279_50288_41971_69399_37510;
 
 #########################
 
@@ -52,6 +52,7 @@ our $tempfile = "$0.tmp";
     my(%A, %B);
 	my %org =
     (
+	 test=>undef,
 	 messages => <<___,
 SectorModel 1.8.14-RELEASE multi-threaded
 ___
@@ -67,16 +68,19 @@ ___
 	 foo => 'bar',
 	 numbers =>
 	 [
-	  .23E-10,							# a very small number
-	  3.14_15_92,						# a very important number
-	  4_294_967_296,					# underscore for legibility
-	  0xff,								# hex
-	  0xdead_beef,						# more hex
-	  0377,								# octal (only numbers, begins with 0)
-	  0b011011,							# binary
-	  0b1010_0110,						# binary, maybe more legible
-	  [ 0.00000000000000, 0.00000000001495, 
-		0.12674123095023, 0.99980376022990 ]
+	  [
+	   .23E-10,							# a very small number
+	   3.14_15_92,						# a very important number
+	   4_294_967_296,					# underscore for legibility
+	   [0xff,							# hex
+		0xdead_beef						# more hex
+	   ],
+	   0377,							# octal (only numbers, begins with 0)
+	   0b011011,						# binary
+	   0b1010_0110,						# binary, maybe more legible
+	   [ 0.00000000000000, 0.00000000001495, 
+		 0.12674123095023, 0.99980376022990 ]
+	  ]
 	 ],
 
 	 "\\ό" => [ "ίφό^!", ";\"\'^" ]

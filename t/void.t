@@ -4,7 +4,7 @@
 #
 # Test reading/writinge non-existing files and empty data.
 #
-# $Writestamp: 2007-12-05 22:10:55 andreas$
+# $Writestamp: 2008-07-17 17:20:44 eh2sper$
 # $Compile: perl -M'constant standalone => 1' void.t$
 
 use warnings;
@@ -21,17 +21,12 @@ our $tempfile = "$0.tmp";
 #########################
 
 {
-	open my $fh, ">$tempfile"; close $fh;
-	my $data = Data::Rlist::read($tempfile);
-
-	ok(not defined $data);
-
-	unlink($tempfile);
-	$data = eval { Data::Rlist::read($tempfile) }; # trap die exception, get undef
-
-	ok(not defined $data);
-
-	#$Data::Rlist::DEBUG = 1;
+	open my $fh, ">$tempfile"; close $fh;	 # create file of zero size
+	my $data = Data::Rlist::read($tempfile); # it shall be readable
+	ok(not defined $data);					 # in form of undef
+	unlink($tempfile);						 # erase it
+	$data = eval { Data::Rlist::read($tempfile) }; # now trap die exception
+	ok(not defined $data);						   # and get undef again
 
 	ok((not defined ReadData(\" ")) && Data::Rlist::missing_input()); # empty input
 	ok((not defined ReadData(\";")) && Data::Rlist::missing_input()); # dto.

@@ -4,6 +4,9 @@ Makefile.PL
 MANIFEST
 README
 Rlist.pm.html
+t/test1.rls
+t/test2.rls
+t/test3.rls
 t/binary.t
 t/camel.t
 t/csv.t
@@ -11,7 +14,6 @@ t/Data-Rlist.t
 t/deparse.t
 t/keelhaul.t
 t/round.t
-t/test1.rls
-t/test2.rls
 t/void.t
+t/nanoscript.t
 META.yml                                 Module meta-data (added by MakeMaker)

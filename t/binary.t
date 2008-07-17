@@ -4,7 +4,7 @@
 #
 # Test bas64-encoded binaries.
 #
-# $Writestamp: 2007-12-07 19:21:31 eh2sper$
+# $Writestamp: 2008-02-10 23:51:10 andreas$
 # $Compile: perl -M'constant standalone => 1' binary.t$
 
 use warnings;
@@ -40,7 +40,7 @@ our $temp;
 	}
 }
 
-#unlink $tempfile;
+unlink $tempfile;
 
 ### Local Variables:
 ### buffer-file-coding-system: iso-latin-1

@@ -1,34 +1,113 @@
 #!/usr/bin/perl
 # -*-cperl-*-
 
-=head1 NAME
+=head1 VENUE
 
 Data::Rlist - A lightweight data language for Perl, C and C++
 
 =cut
 
-# $Writestamp: 2007-12-10 00:09:53 andreas$
-# $Compile: pod2html Rlist.pm >../../Rlist.pm.html$
-# $Compile: podchecker Rlist.pm$
+# $Writestamp: 2008-07-17 17:38:13 eh2sper$
+# $Compile: perl -c Rlist.pm; pod2html --title="Random-Lists" Rlist.pm >../../Rlist.pm.html$
+# $Comp1le: podchecker Rlist.pm$
+
+=pod
+
+F<Random-Lists> (Rlist) is  a tag/value text format, able to represent  arbitary data structures in
+plain text.   Like in awk,  Perl and  Python, basic types  are lists (sequential,  associative) and
+scalars (string, number).
+
+You can write any Perl data structure into files as legible text.  You can reload the text in Perl,
+or  in C++  or Python  programs.  In  C++, for  example, you  then get  same structure  in  form of
+F<double>s (without loosing precision) and STL types.
+
+You can also generate CSV and XML from arbitary Perl types.
+
+Like with CSV  the lexical overhead is minimal:  files are merely data.  In text  editors users see
+the pure data in a structured from.  In short, the format
+
+- allows the definition of hierachical, constant data,
+
+- no user-defined types, no keywords, no variables and no arithmetic expressions,
+
+- 7-bit-ASCII character encoding.
+
+The implemenations are  also extremely fast and very  well tested.  They also scale  well: a single
+text files can  express hundreds of megabytes of  data and is still processed in  constant time and
+with constant memory requirements.
+
+Since Rlist allows  no user-defined types the data  is structured out of simple  scalars and lists.
+So the structures  are tacit consents between the  users of the data.  It is  conceivable to simply
+store meta information along with the data.
+
+=head2 Scalars Values
+
+Quoted strings:
+
+    "Hello, World!"
+
+    <<hamlet
+    "This above all: to thine own self be true". - (Act I, Scene III).
+    hamlet
+
+Symbols (Unquoted Strings):
+
+    foobar   cogito.ergo.sum   Memento::mori
+
+Numbers:
+
+    38   10e-6   -.7   3.141592653589793
+
+Identifiers  (aka symbols)  are strings  consisting only  of F<[a-zA-Z_0-9-/~:.@]>  characters; for
+symbols quotes are optional.  All other strings must be wrapped in double-quotes (single-quotes are
+not allowed).
+
+Numbers adhere  to the IEEE 754  syntax for integer-  and floating-point numbers.  For  details see
+F<L</is_symbol>()> and F<L</is_number>()>.
+
+=head2 List Values
+
+Arrays:
+
+    ( 1, 2, ( 3, "Audiatur et altera pars!" ) )
+
+Maps:
+
+    {
+        key = value;
+        lonely-key;
+        3.14159 = Pi;
+        "Meta-syntactic names" = (foo, bar, "lorem ipsum", Acme, ___);
+    }
+
+Note this  is not Perl syntax.
 
 =head1 SYNOPSIS
 
     use Data::Rlist;
 
-Data from files:
+=head2 File and String I/O
 
-                  Data::Rlist::write($data, $filename);
-    $data       = Data::Rlist::read($filename);
-    $data       = ReadData($filename);
+File I/O of any Perl data F<$thing>:
 
-Data from text:
+                  Data::Rlist::write($thing, $filename);
+    $thing      = Data::Rlist::read($filename);
+    $thing      = ReadData($filename); # exported function
 
-    $string_ref = Data::Rlist::write_string($data);
-    $string     = Data::Rlist::make_string($data);
-    $data       = Data::Rlist::read_string($string);
-    $data       = ReadData(\$string);
+F<$thing> can be stringified:
 
-Object-oriented interface:
+    $string_ref = Data::Rlist::write_string($thing);
+    $string     = Data::Rlist::make_string($thing);
+    $thing      = Data::Rlist::read_string($string);
+    $thing      = ReadData(\$string);
+
+=cut
+
+#=head2 Writing and Parsing XML
+
+=pod
+
+=head2 Object-oriented Interface
 
     $object     = new Data::Rlist(-data => $thing, -output => \$target_string)
 
@@ -38,35 +117,38 @@ Object-oriented interface:
 
     $object->set(-output => "$HOME/.foorc");
 
-    $object->write(".barrc");   # the argument overrides -output
     $object->write;             # write "~/.foorc", return 1
+    $object->write(".barrc");   # the argument overrides -output
     WriteData($object);         # dto.
 
-The F<-input> attribute defines the text to be compiled into Perl data:
+For objects the F<-input> attribute defines the text to be compiled into Perl data:
 
     $object->set(-input => \$input_string);
 
-    $data       = $object->read;
-    $data       = $object->read($other); # overrides -input
+    $thing      = $object->read;
+    $thing      = $object->read($other_string);  # overrides -input
 
     $object->set(-input => "$HOME/.foorc");
 
-    $data       = $object->read;                 # parse "~/.foorc"
-    $data       = $object->read("$HOME/.barrc"); # override -input
-    $data       = $object->read(\$string);       # parse $string
-    $data       = $object->read_string($string_or_ref);
-    $data       = ReadData($string_or_ref);
+    $foorc      = $object->read;                 # parse "~/.foorc"
+    $barrc      = $object->read("$HOME/.barrc"); # override -input
 
-Make up a string out of thin air, no matter how F<-output> is set:
+    $thing      = $object->read(\$string);       # dto., but parse $string
+    $thing      = $object->read_string($string_or_ref);
+    $thing      = ReadData($string_or_ref);
 
-    $string_ref = $object->write_string; # write to new string (ignores -output)
+To compile a string out of thin air (ignoring the F<-output> attribute), use:
+
+    $string_ref = $object->write_string;
     $string     = $object->make_string;  # dto. but return string value, not ref
 
-    print $object->make_string; # dumps $thing
+    print $object->make_string; # dumps $thing to STDOUT
     PrintData($object);         # dto.
     PrintData($thing);          # dto.
 
-Using F<Data::Rlist> one can also create deep-copies of Perl data:
+=head2 Deep Data Copies
+
+To create deep-copies of Perl data:
 
     $reloaded   = Data::Rlist::keelhaul($thing);
 
@@ -75,94 +157,20 @@ Using F<Data::Rlist> one can also create deep-copies of Perl data:
     $reloaded   = $object->keelhaul;
     $reloaded   = KeelhaulData($object);
 
-The functionality is called F<keelhauling>.  The metaphor vividly connotes that F<$thing> is
-stringified, then compiled back.  See F<L</keelhaul>()> for why this only sounds useless.
-
-The little brother of F<L</keelhaul>()> is F<L</deep_compare>()>:
+The metaphor F<keelhaul>  vividly connotes that F<$thing> is stringified,  then compiled back.  For
+more information see F<L</keelhaul>()>, and its variant is F<L</deep_compare>()>:
 
     print join("\n", Data::Rlist::deep_compare($a, $b));
 
-=head1 VENUE
+=head2 More Examples
 
-F<Random-Lists> (Rlist) is a tag/value format to describe data structures as plain text.  Therefore
-it defines lists of values (arrays) and tags/values (hashes). Basic values are constant strings and
-numbers.  The format attempts to represent the data pure and untinged, but without breaking its
-structure or legibility.  The language
-
-- allows the definition of hierachical data,
-
-- disallows recursively-defined data,
-
-- does not consider user-defined types,
-
-- defines no keywords, no variables and no arithmetic expressions,
-
-- defines only constant data,
-
-- uses 7-bit-ASCII character encoding.
-
-Rlists are built from only four primitives: F<number>, F<string>, F<array> and F<hash>.  Like with
-CSV the lexical overhead Rlist imposes is minimal: files are merely data.  They're processable by
-scripts, and in text editors users see the pure data in a structured from, rather then getting
-dazzled by language gizmo's.
-
-With Rlist data is not typified, and hence data schemes are tacit consents between the users of the
-data (the programs).  But schemes can be implemented by storing the meta information together with
-the data itself.
-
-=over
-
-=item Numbers and Strings (Scalars)
-
-Strings:
+String- and number values:
 
     "Hello, World!"
-
-    <<hamlet
-    "This above all: to thine own self be true". - (Act I, Scene III).
-    hamlet
-
-Symbols:
-
-    foobar   cogito.ergo.sum   Memento::mori
-
-Numbers:
-
-    38   10e-6   -.7   3.141592653589793
-
-Strings are wrapped by double-quotes.  Identifiers (or: symbolic names) are strings consisting only
-of F<[a-zA-Z_0-9-/~:.@]> characters; for them the quotes are optional. Numbers adhere to the IEEE
-754 syntax for integer- and floating-point numbers.  For details see F<L<is_symbol>()> and
-F<L<is_number>()>.
-
-=item Arrays and Hashes (Lists)
-
-Arrays are sequential lists:
-
-    ( 1, 2, ( 3, "Audiatur et altera pars!" ) )
-
-Hashes are associative lists:
-
-    {
-        key = value;
-        lonely-key;
-        3.14159 = Pi;
-        "Meta-syntactic names" = (foo, bar, "lorem ipsum", Acme, ___);
-    }
-
-=back
-
-=head1 EXAMPLES
-
-Single strings and numbers:
-
-    "Hello, World!"
-
     foo                         # compiles to { 'foo' => undef }
-
     3.1415                      # compiles to { 3.1415 => undef }
 
-Array:
+Array values:
 
     (1, a, 4, "b u z")          # list of numbers/strings
 
@@ -172,26 +180,43 @@ Array:
     ((1, a, 3, "foo bar"),
      (7, c, 0, ""))             # another list of lists
 
-Array of strings:
+Here-document strings:
 
-    warning = (
-        "main correlation-matrix not positive-definite", 
-        "using pseudo-decomposed sigma-matrix", 
-        "cannot evaluate CVaR: the no. of simulations is to low for confidence-level 0.90"
-    );
+		$hello = ReadData(\<<HELLO)
+		( <<DEUTSCH, <<ENGLISH, <<FRANCAIS, <<CASTELLANO, <<KLINGON, <<BRAINF_CK )
+	Hallo Welt!
+	DEUTSCH
+	Hello World!
+	ENGLISH
+	Bonjour le monde!
+	FRANCAIS
+	Ola mundo!
+	CASTELLANO
+	~ nuqneH { ~ 'u' ~ nuqneH disp disp } name
+	nuqneH
+	KLINGON
+	++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++
+	..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>.
+	BRAINF_CK
+	HELLO
+
+Compiles F<$hello> as 
+
+	[ "Hallo Welt!\n", "Hello World!\n", "Bonjour le monde!\n", "Ola mundo!\n",
+      "~ nuqneH { ~ 'u' ~ nuqneH disp disp } name\n",
+	  "++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++\n..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>.\n" ]
 
 Configuration object as hash:
 
     {
         contribution_quantile = 0.99;
         default_only_mode = Y;
-        importance_sampling = N;
-        num_runs = 10000;
-        num_threads = 10;
+        number_of_runs = 10000;
+        number_of_threads = 10;
         # etc.
     }
 
-A comprehensive example:
+Altogether:
 
     Metaphysic-terms =
     {
@@ -221,79 +246,35 @@ Value
         };
     };
 
-=head1 DESCRIPTION
-
-=head2 Audience
-
-Rlist is useful as a "glue data language" between different systems and programs, for configuration
-files and object serialization.  The format excels over comma-separated values (CSV), but isn't as
-excessive as XML:
-
-=over
-
-=item *
-
-Like CSV the format describes merely the data itself, but the data may be structured in multiple
-levels, not just lines.
-
-=item *
-
-Like XML data can be as complex as required, but while XML is geared to markup data within some
-continuous text (the document), Rlist defines the pure data structure.
-
-=back
-
-Portable implementations yet exist for Perl, C and C++. They're stable, efficient and do not depend
-on other software.  The Perl implementation operates directly on builtin types, where C++ uses STL
-types.  Either way data integrity is guaranteed: floats won't loose their precision, Perl strings
-are loaded into F<std::string>s, and Perl hashes and arrays resurrect in as F<std::map>s and
-F<std::vector>s.
-
-The implementations scale well: a single text files can express hundreds of megabytes of data,
-while the data is readable in constant time and with constant memory requirements.  This makes
-files applicable as "mini-databases" loaded into RAM at program startup.  For example,
-L<http://www.sternenfall.de> uses Rlist instead of a MySQL database.
+=head1 LANGUAGE DETAILS
 
 =head2 Character Encoding
 
-Rlist text uses 7-bit-ASCII.  The 95 printable character codes 32 to 126 occupy one character.
-Codes 0 to 31 and 127 to 255 require four characters each: the F<\> escape character followed by
-the octal code number. For example, the German Umlaut character F<E<uuml>> (252) is translated into
-F<\374>.  An exception are the following codes:
+Rlist text is implemented with 7-bit-ASCII.  The  95 printable character codes 32 to 126 occupy one
+character.  Codes 0  to 31 and 127 to  255 require four characters each: the  F<\> escape character
+followed by  the octal code number.  For example, the  German Umlaut character F<E<uuml>>  (252) is
+translated into F<\374>.  An exception are the following codes:
 
-	ASCII				ESCAPED AS
-	-----				----------
-      9 tab				  \t
-     10 linefeed		  \n
-     13 return  		  \r
-	 34 quote	  "		  \"
-	 39 quote	  '		  \'
-	 92 backslash \		  \\
+    ASCII               ESCAPED AS
+    -----               ----------
+      9 tab               \t
+     10 linefeed          \n
+     13 return            \r
+     34 quote     "       \"
+     39 quote     '       \'
+     92 backslash \       \\
 
-=head2 Values
+=head2 Values, Scalar Values, Default Values
 
-Rlist F<values> are either scalars, array elements or the value of a pair. They're always constant.
+Rlist F<values> are either scalars, array elements or the value of a pair. Each value is constant.
 
-=head3 Scalar Values
+Number  and  string constants  follow  the  C language  lexicography.   Strings  that  look like  C
+identifier names  must not  be quoted.   When read back  all strings  are unquoted.   Quoting means
+F<L<to encode|/escape>()> characters according to the input character set, then to double-quote the
+result.
 
-All program data is finally convertible into numbers and strings.  In Rlist number and string
-constants follow the C language lexicography.  Strings that look like C identifier names must not
-be quoted.
-
-Strings are quoted implicitly when building Rlists; when reading them back strings are unquoted.
-Quoting means to encode characters according to the input character set (see above), then to
-double-quote the result.
-
-=head3 Default Values
-
-By definition all input is compiled into an array or hash; hashes are the default. For example, the
-string C<"Hello, World!"> is compiled into:
-
-    { "Hello, World!" => undef }
-
-Likewise the parser of the C++ implementation by default returns a F<std::map> with one pair. The
-default scalar value is the empty string C<"">. In Perl, F<undef>'d list elements are compiled into
-C<"">.
+By definition the default scalar value is the  empty string C<"">.  So in Perl F<undef> is compiled
+into C<"">.
 
 =head3 Here-Documents
 
@@ -302,8 +283,8 @@ and RFC 111.  Multi-line quoted strings can be expressed with
 
     <<DELIMITER
 
-Following the sigil F< << > an identifier specifies how to terminate the string scalar.  The value
-of the scalar will be all lines following the current line down to the line starting with the
+Following the sigil F< << > an identifier  specifies how to terminate the string scalar.  The value
+of the  scalar will be  all lines  following the current  line down to  the line starting  with the
 delimiter.  There must be no space between the F< << > and the identifier.  For example,
 
     {
@@ -319,69 +300,119 @@ delimiter.  There must be no space between the F< << > and the identifier.  For 
         };
     }
 
+See also L</Embedded Perl Code>.
+
 =head3 Binary Data
 
-Binary data shall be represented as base64-encoded string, or L<here-document|/Here-Documents>
+Binary  data  can be  represented  as  base64-encoded  string, or  L<here-document|/Here-Documents>
 string.  For example,
 
     use MIME::Base64;
 
     $str = encode_base64($binary_buf);
 
-The returned encoded string F<$str> is broken into lines of no more than 76 characters each and it
-will end with C<"\n"> unless it is empty.  Since F<$str> ends with C<"\n"> it qualifies as
-here-document.  See also L<Encode>, L<MIME::Base64>.
+The returned encoded string F<$str> is broken into  lines of no more than 76 characters each and it
+will  end with  C<"\n"> unless  it  is empty.   Since F<$str>  ends  with C<"\n">  it qualifies  as
+here-document. For example,
 
-B<EXAMPLE>
-
-	use Data::Rlist;
-	use MIME::Base64;
+    use Data::Rlist;
+    use MIME::Base64;
 
     $binary_data = join('', map { chr(int rand 256) } 1..300);
-	$sample = { random_string => encode_base64($binary_data) };
+    $sample = { random_string => encode_base64($binary_data) };
 
-	WriteData $sample, 'random.rls', 'default';
+    WriteData $sample, 'random.rls', 'default';
 
-Writes a file F<random.rls> that looks like:
+This code will write a file F<random.rls> that looks like:
 
-	{
-		random_string = <<___
-	w5BFJIB3UxX/NVQkpKkCxEulDJ0ZR3ku1dBw9iPu2UVNIr71Y0qsL4WxvR/rN8VgswNDygI0xelb
-	aK3FytOrFg6c1EgaOtEudmUdCfGamjsRNHE2s5RiY0ZiaC5E5XCm9H087dAjUHPtOiZEpZVt3wAc
-	KfoV97kETH3BU8/bFGOqscCIVLUwD9NIIBWtAw6m4evm42kNhDdQKA3dNXvhbI260pUzwXiLYg8q
-	MDO8rSdcpL4Lm+tYikKrgCih9UxpWbfus+yHWIoKo/6tW4KFoufGFf3zcgnurYSSG2KRLKkmyEa+
-	s19vvUNmjOH0j1Ph0ZTi2pFucIhok4krJi0B5yNbQStQaq23v7sTqNom/xdRgAITROUIoel5sQIn
-	CqxenNM/M4uiUBV9OhyP
-	___
-	;
-	}
+    {
+        random_string = <<___
+    w5BFJIB3UxX/NVQkpKkCxEulDJ0ZR3ku1dBw9iPu2UVNIr71Y0qsL4WxvR/rN8VgswNDygI0xelb
+    aK3FytOrFg6c1EgaOtEudmUdCfGamjsRNHE2s5RiY0ZiaC5E5XCm9H087dAjUHPtOiZEpZVt3wAc
+    KfoV97kETH3BU8/bFGOqscCIVLUwD9NIIBWtAw6m4evm42kNhDdQKA3dNXvhbI260pUzwXiLYg8q
+    MDO8rSdcpL4Lm+tYikKrgCih9UxpWbfus+yHWIoKo/6tW4KFoufGFf3zcgnurYSSG2KRLKkmyEa+
+    s19vvUNmjOH0j1Ph0ZTi2pFucIhok4krJi0B5yNbQStQaq23v7sTqNom/xdRgAITROUIoel5sQIn
+    CqxenNM/M4uiUBV9OhyP
+    ___
+    ;
+    }
 
-Each line accept the last line in the here-doc has 75 characters, plus the newline.  Note that from
-the predefined-compile options only C<"default"> and C<"outlined"> enable here-docs.
+Each line except  the last in the here-doc-string  has 75 characters, plus the newline.   It is not
+necessary, however, to write the string as here-doc.  See also L<Encode>, L<MIME::Base64>.
 
 =head3 Embedded Perl Code
 
-Rlists may define embedded programs: F<nanonscripts>.  They're defined as
-L<here-document|/Here-Documents> that is delimited with the special delimiter C<"perl">.  For
+Rlists    may     define    embedded    programs:    F<nanonscripts>.      They're    defined    as
+L<here-document|/Here-Documents>  that is  delimited  with the  special  delimiter C<"perl">.   For
 example,
 
-    hello = (<<perl);
+    hello = <<perl;
     print "Hello, World!";
     perl
 
-After the text has been fully parsed such strings are F<eval>'d in the order of their occurrence.
-Within the F<eval> F<%root> or F<@root> defines the root of the current Rlist.
+Another example is
+
+    ( <<perl, <<perl, <<perl, <<perl )
+    print "Hello World!\n"			# english
+    perl
+    print "Hallo Welt!\n"			# german
+    perl
+    print "Bonjour le monde!\n"		# french
+    perl
+    print "Olá mundo!\n"			# spanish
+    perl
+
+After the  text has been  fully parsed you  call F<evaluate_nanoscripts()> to F<eval>  the embedded
+codes in the order of their occurrence.  Then F<evaluate_nanoscripts()> arranges, that...
+
+=over
+
+=item *
+
+within the F<eval> the F<$Rlist> variable defines the current Rlist (the root of the whole input),
+which is either an unblessed array-ref or hash-ref;
+
+=item *
+
+within the F<eval> the list that hosts the nanoscript is associative (some hash), the variable
+F<$this> refers to this hash, and F<$where> names the key whose value defines the script;
+
+=item *
+
+otherwise F<$this> refers to the array that hosts the nanoscript, and F<$where> is defined as the
+(integer) index of the element that defines the script.
+
+=item *
+
+each code is F<eval>d and the result is F<put in place of the nanoscript>, so that the already
+compiled data is modified.
+
+=back
+
+A nifty example is
+
+	( <<perl )
+	$rlist = ReadData(\'{ foo = bar; }');	# ReadData is auto-exported from Data/Rlist.pm
+	perl
+
+which coerces the  already compiled Rlist (some array)  into a hash.  Provided with  such an input,
+F<parse()> is then forced to return
+
+	{ 'foo' => 'bar' }
+
+You can  also F<eval>  all embedded  codes on your  own; they're  returned by  the F<nanoscripts()>
+method.  See also F<result()>.
 
 =head2 Comments
 
-Rlist supports multiple forms of comments: F<//> or F<#> single-line-comments, and F</* */>
-multi-line-comments.
+Rlist  supports multiple  forms  of comments:  F<//>  or F<#>  single-line-comments,  and F</*  */>
+multi-line-comments. You may use all three forms at will.
 
 =head2 Compile Options
 
-The format of the compiled text and the behavior of F<L</compile>()> can be controlled by the
-OPTIONS parameter of F<L</write>()>, F<L</write_string>()> etc.  The argument is a hash defining how
-the Rlist text shall be formatted. The following pairs are recognized:
+The format  of the  compiled text and  the behavior  of F<L</compile>()> can  be controlled  by the
+OPTIONS parameter  of F<L</write>()>, F<L</write_string>()> etc.   The argument is  a hash defining
+how the Rlist text shall be formatted. The following pairs are recognized:
 
 =over
 
@@ -393,17 +424,20 @@ are not rounded.
 
 =item 'scientific' =E<gt> FLAG
 
-Causes F<L</compile>()> to masquerade F<$Data::Rlist::RoundScientific>.  See F<L</round>()>.
+Causes F<L</compile>()> to masquerade F<$Data::Rlist::RoundScientific>.  See F<L</round>()> for
+what this means.
 
 =item 'code_refs' =E<gt> TOKEN
 
-Specifiy how F<L</compile>()> shall treat F<CODE> reference.  Legal values for TOKEN are 0 (the
+Defines how F<L</compile>()> shall treat F<CODE> reference.  Legal values for TOKEN are 0 (the
 default), C<"call"> and C<"deparse">.
 
-0 compiles the reference into the string C<"?CODE?">. C<"call"> calls the code, then compiles the
-return value.  C<"deparse"> serializes the code using F<B::Deparse>, which reproduces the Perl
-source. Note that it then makes sense to enable C<"here_docs"> (see below), because otherwise the
-deparsed code will be in one string with LFs quoted as C<"\n">.
+A TOKEN value of 0 compiles subroutine references into the string C<"?CODE?">. A value of C<"call">
+calls the code, then compiles the return value.  C<"deparse"> serializes the code using
+F<B::Deparse>, which reproduces the Perl source. Note that it then makes sense to enable
+C<"here_docs"> (see below), because otherwise the deparsed code will be in one string with LFs
+quoted as C<"\n">.  This causes no harm, but when opened in a text editor the data will be more
+legible.
 
 =item 'threads' =E<gt> COUNT
 
@@ -413,15 +447,16 @@ machines with at least COUNT CPUs.
 =item 'here_docs' =E<gt> FLAG
 
 If enabled strings with at least two newlines in them are written as
-L<here-document|/Here-Documents>, when possible.  Note that the string has to be terminated with a
-C<"\n"> to qualify as here-document.
+L<here-document|/Here-Documents>, when possible.  To qualify as here-document a string has to have
+at least two LFs (C<"\n">), one of which must terminate it.
 
 =item 'auto_quote' =E<gt> FLAG
 
-When true do not quote strings that look like identifiers (by means of F<L<is_symbol>()>), otherwise
-quote F<all> strings.  Note that hash keys are not affected by this flag.  The default is true, but
-not for F<L<write_csv>()> and F<L<write_conf>()>, where the default is false (quote all
-non-numbers).
+When true (default) do not quote strings that look like identifiers (determined by
+F<L</is_symbol>()>).  When false quote F<all> strings.  Hash keys are not affected.
+
+F<L</write_csv>()> and F<L</write_conf>()> interpret this flag differently.  False means not to
+quote at all.  True quotes only strings that don't look like numbers and that aren't yet quoted.
 
 =item 'outline_data' =E<gt> NUMBER
 
@@ -457,8 +492,11 @@ text without measure.
 
 =item 'eol_space' =E<gt> STRING
 
-End-of-line string to use (the linefeed).  For example, legal values are C<"">, C<" ">, C<"\r\n">
-etc. The default is C<"\n">.
+End-of-line string to use (the linefeed).  For example, legal values are C<"">, C<" ">, C<"\n">,
+C<"\r\n"> etc. The default is F<undef>, which means to use the current value of F<$/>.
+
+Note that this is a compile-option that  only affects F<compile()>.  When parsing files the builtin
+F<readline> function is called, which uses F<$/>.
 
 =item 'paren_space' =E<gt> STRING
 
@@ -473,15 +511,15 @@ F<L</compile>()> will always print the C<"eol_space"> string after the C<"semico
 
 =item 'assign_punct' =E<gt> STRING
 
-String to make up key/value-pairs. Defaults to C<" = ">.  Note the this is a compile option: the
+String to make up key/value-pairs. Defaults to C<" = ">.  Note that this is a compile option: the
 parser always expects some C<"="> to designate a pair.
 
 =back
 
 =head3 Predefined Options
 
-The L<OPTIONS|/Compile Options> parameter accepted by some package functions is either a hash-ref or the name of a
-predefined set:
+The L<OPTIONS|/Compile Options> parameter accepted by some package functions is either a hash-ref
+or the name of a predefined set:
 
 =over
 
@@ -508,13 +546,13 @@ can be F<eval>'d, but it cannot be F<L</read>()> back.
 
 =item 'fast' or F<undef>
 
-Compile data as fast as possible, using F<L<compile_fast>()>, not F<L</compile>()>.
+Compile data as fast as possible, using F<L</compile_fast>()>, not F<L</compile>()>.
 
 =back
 
-All functions that define an L<OPTIONS|/Compile Options> parameter implicitly call
-F<L</complete_options>()> to complete the argument from one of the predefined sets, and
-C<"default">.  Therefore you may just define a "lazy subset of options" to these functions. For
+All   functions   that   define   an   L<OPTIONS|/Compile  Options>   parameter   implicitly   call
+F<L</complete_options>()>  to  complete  the  argument   from  one  of  the  predefined  sets,  and
+C<"default">.  Therefore  you may just define  a "lazy subset  of options" to these  functions. For
 example,
 
     my $obj = new Data::Rlist(-data => $thing);
@@ -523,19 +561,22 @@ example,
 
 =head2 Debugging Data (Finding Self-References)
 
-Debugging (hierachical) data means breaking recursively-defined data.
-
-Set F<$Data::Rlist::MaxDepth> to an integer above 0 to define the depth under which
-F<L</compile>()> shall not venture deeper. 0 disables debugging.  When positive compilation breaks
-on deep recursions caused by circular references, and on F<stderr> a message like the following is
-printed:
+To  reduce recursive data  structures (into  true hierachies)  set F<$Data::Rlist::MaxDepth>  to an
+integer above 0.  It then defines the  depth under which F<L</compile>()> shall not venture deeper.
+The compilation of Perl data (into Rlist text)  then continues, but on F<STDERR> a message like the
+following is printed:
 
     ERROR: compile2() broken in deep ARRAY(0x101aaeec) (depth = 101, max-depth = 100)
 
-The message will also be repeated as comment when the compiled Rlist is written to a file.
-Furthermore F<$Data::Rlist::Broken> is incremented by one - and compilation continues!  So, any
-attempt to venture deeper as suggested by F<$Data::Rlist::MaxDepth> in the data will be blocked,
-but compilation continues above that depth.  Please see F<L</broken>()>.
+This  message will  also be  repeated as  comment when  the compiled  Rlist is  written to  a file.
+Furthermore  F<$Data::Rlist::Broken>  is  incremented  by  one. While  the  compilation  continues,
+effectively  any  attempt to  venture  deeper as  suggested  by  F<$Data::Rlist::MaxDepth> will  be
+blocked.  See also F<L</broken>()>.
+
+=head2 Debugging Parsing/Compiling
+
+Setting  F<$Data::Rlist::DEBUG>  to  a true  value  prints  many  useful  messages on  STDERR  when
+reading/writing data.
 
 =cut
 
@@ -550,24 +591,30 @@ use integer;
 
 use vars qw/$VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS
 
-            %PredefinedOptions $DEBUG 
-            $RoundScientific $SafeCppMode 
+            %PredefinedOptions $DEBUG
+            $RoundScientific $SafeCppMode $EchoStderr
             $R $Fh $Locked $DefaultMaxDepth $MaxDepth $Depth
-            $Errors $Broken $MissingInput
+            $Errors $Warnings $Broken $MissingInput @Messages
             $DefaultCsvDelimiter $DefaultConfDelimiter $DefaultConfSeparator
+            $DefaultNanoscriptToken
 
-            $g_re_punct_cset $g_re_integer_here $g_re_float_here
-            $g_re_symbol_cset $g_re_symbol_here $g_re_string_here
-            $g_re_integer $g_re_float
-			$g_re_symbol $g_re_string $g_re_value
-		   /;
+            $REPunctuationCharacter $REIntegerHere $REFloatHere
+            $RESymbolCharacter $RESymbolHere $REStringHere
+            $REInteger $REFloat
+            $RESymbol $REString $REValue
+			@REIsPunct @REIsDigit
+           /;
 
-use vars qw/$Readstruct $ReadFh $C1 $Ln $LnArray/; # used by open, lex
+# Parser/lexer variables.  Used by open_input, parse and lex. Declaring them as lexicals is
+# slightly faster than to 'use vars'.
 
-use constant DEFAULT => qq'""'; # default Rlist, the empty string
+my($Readstruct, $ReadFh, $Ln, $LnArray);
+my(%Rules, @VStk, @NStk);
+
+use constant DEFAULT_VALUE => qq'""'; # default Rlist, the empty string
 
 BEGIN {
-    $VERSION = '1.38';
+    $VERSION = '1.41';
     $DEBUG = 0;
     @ISA = qw/Exporter/;
 
@@ -593,7 +640,7 @@ BEGIN {
 
                     keelhaul deep_compare fork_and_wait synthesize_pathname
 
-                    $g_re_integer $g_re_float $g_re_symbol/;
+                    $REInteger $REFloat $RESymbol/;
 
     %EXPORT_TAGS = (# Handle IEEE numbers
                     floats => [@EXPORT, qw/equal round is_number is_integer/],
@@ -608,11 +655,13 @@ BEGIN {
                     aux => [@EXPORT, qw/keelhaul deep_compare fork_and_wait synthesize_pathname/]);
 
     $MaxDepth = 0; $DefaultMaxDepth = 100; $Broken = 0;
-    $SafeCppMode = 1;
+    $SafeCppMode = 0;
+	$EchoStderr = 0;
     $RoundScientific = 0;
     $DefaultConfSeparator = ' = ';
     $DefaultConfDelimiter = '\s*=\s*';
     $DefaultCsvDelimiter = '\s*,\s*';
+    $DefaultNanoscriptToken = 'perl';
 
     %PredefinedOptions =
     (
@@ -671,201 +720,148 @@ BEGIN {
     );
 
     ########
-    # Initialize global regular expressions.
+    # Regular expressions for scalars
     #
-    # Note that $g_re_symbol_here shall be defined equal to 'identifier' regex in 'rlist.l'.
-    # Otherwise the C/C++ and Perl implementations might not be compatible.  See also the C++
-    # function rlist::quote() and the {identifier} rule in rlist.l
-	#
-	# By default, the "^" character is guaranteed to match only the beginning of the string, the
-	# "$" character only the end (or before the newline at the end). The "/s" modifier will force
-	# "^" to match only at the beginning of the string and "$" to match only at the end (or just
-	# before a newline at the end) of the string.  "$" hence ignores an optional trailing newline.
-	#
-	# When "/m" is used this means for "foo\nbar" the "$" matches the end of the string (after "r")
-	# and also before every line break (between "o" and "\n").  Therefore we've to use "\z" which
-	# matches only at the end of the string.
-	#
-	# See also <http://www.regular-expressions.info/examplesprogrammer.html>.
-	#
+    # $RESymbolHere shall be defined equal to the 'identifier' regex in 'rlist.l', to keep the
+    # C/C++ and Perl implementations be compatible.  See also the C++ function quote() and the
+    # {identifier} rule in <rlist.l>
+    #
+	# In Perl regexes, by default the "^" character matches only the beginning of the string, the
+    # "$" character only the end (or before the newline at the end). The "/s" modifier will force
+    # "^" to match only at the beginning of the string and "$" to match only at the end (or just
+    # before a newline at the end) of the string.  "$" hence ignores an optional trailing newline.
+    #
+    # When "/m" is used this means for "foo\nbar" the "$" matches the end of the string (after "r")
+    # and also before every line break (between "o" and "\n").  Therefore we've to use "\z" which
+    # matches only at the end of the string.
 
-    $g_re_integer_here = '[+-]?\d+';
-    $g_re_float_here = '(?:[+-]?)(?=\d|\.\d)\d*(?:\.\d*)?(?:[Ee](?:[+-]?\d+))?';
-    $g_re_punct_cset = '\=\,;\{\}\(\)';
-    $g_re_symbol_cset = 'a-zA-Z_0-9\-/\~:\.@';
-    $g_re_symbol_here = '[a-zA-Z_\-/\~:@]'.qq'[$g_re_symbol_cset]*';
-	$g_re_string_here = '"[^"\\\r\n]*(?:\\.[^"\\\r\n]*)*"'; # " allowed inside the quotes, but only as \"
+    $REIntegerHere = '[+-]?\d+';
+    $REFloatHere = '(?:[+-]?)(?=\d|\.\d)\d*(?:\.\d*)?(?:[Ee](?:[+-]?\d+))?';
+    $REPunctuationCharacter = '\=\,;\{\}\(\)';
+    $RESymbolCharacter = 'a-zA-Z_0-9\-/\~:\.@';
+    $RESymbolHere = '[a-zA-Z_\-/\~:@]'.qq'[$RESymbolCharacter]*';
+    $REStringHere = '"[^"\\\r\n]*(?:\\.[^"\\\r\n]*)*"'; # " allowed inside the quotes, but only as \"
 
-    $g_re_integer = qr/^$g_re_integer_here\z/;
-    $g_re_float = qr/^$g_re_float_here\z/;
-    $g_re_symbol = qr/^$g_re_symbol_here\z/;
-	$g_re_string = qr/^$g_re_string_here\z/;
+    $REInteger = qr/^$REIntegerHere\z/;
+    $REFloat = qr/^$REFloatHere\z/;
+    $RESymbol = qr/^$RESymbolHere\z/;
+    $REString = qr/^$REStringHere\z/;
 
-	# Compiled Rlist value that can be parsed back.
-	# Note that $g_re_string is nearly equally as fast as '^"'.
-    $g_re_value = qr/$g_re_string|
-					 $g_re_integer|
-					 $g_re_float|
-					 $g_re_symbol/x;
+    $REValue = qr/$REString|
+                  $REInteger|
+                  $REFloat|
+                  $RESymbol/x;
 
-    $g_re_value = qr/^$g_re_string_here\z|
-					 ^$g_re_integer_here\z|
-					 ^$g_re_float_here\z|
-					 ^$g_re_symbol_here\z/x if 0; # slightly slower; why?
+    $REValue = qr/^$REStringHere\z|
+                  ^$REIntegerHere\z|
+                  ^$REFloatHere\z|
+                  ^$RESymbolHere\z/x if 0; # disabled because it is slightly slower
 
     ########
-    # Rlist parser-map.
+    # Rlist parser map:
     #
     #   token => [ rule, deduce-function ]
     #   rule  => [ rule, deduce-function ]
     #
-    # See `lex()' function for token meanings.
-	#
+    # See `lex()' for token meanings.
 
-    use vars qw/%Rules @VStk $rule_min $rule_max
-                $pv $pv1 $pv2 $pk $pk1 $pk2 $pl $ph1 $ph2/;
+	sub syntax_error($;$) {
+		my($msg, $tr) = (shift, shift||'??');
+		$msg =~ s/\s/ /go; pr1nt('ERROR', $msg);
+		$Errors++; $tr
+	}
+	sub warning($;$) {
+		my($msg, $tr) = (shift, shift||'');
+		$msg =~ s/\s/ /go; pr1nt('WARNING', $msg);
+		$Warnings++; $tr
+	}
 
     %Rules =
-    (
-     'v;' => [ 'h', sub {
-                   $pk = pop @VStk;
-                   if (ref $pk) {
-                       push @VStk, $pk;
-                   } else { 
-                       # no checking of $pk against ""
-                       push @VStk, { $pk => '' }
-                   }
-               }
-             ],
+    (#
+	 # Key/value pairs.
+	 #
+	 # For nanoscripts (n) push hash-ref, key and the script to @NStk.
+	 #
 
-     'v=v;' => [ 'h', sub {
-                     ($pv, $pk) = (pop @VStk, pop @VStk);
-                     push @VStk, { $pk => $pv };
-                 }
-               ],
+     '{}'	=> sub { push @VStk, { }; 'v' },
+     '{h}'  => sub { 'v' },
+	 # first pairs (open the hash)
+ 	 'v;'	=> sub { push @VStk, { pop(@VStk) => '' }; 'h' },
+     'v=v;'	=> sub { push @VStk, { splice @VStk, -2 }; 'h' },
+     'v=n;'	=> sub { my($k, $v) = splice @VStk, -2;
+					 my $h = { $k => $v };
+					 push @VStk, $h; push @NStk, [ $h, $k, $v ]; 'h' },
+	 # subsequent pairs (complete the hash)
+ 	 'hv;'	=> sub { my $k      = pop @VStk;	    $VStk[$#VStk]->{$k} = ''; 'h' },
+     'hv=v' => sub { my($k, $v) = splice @VStk, -2; $VStk[$#VStk]->{$k} = $v; 'h' },
+     'hv=n' => sub { my($k, $v) = splice @VStk, -2; $VStk[$#VStk]->{$k} = $v; push @NStk, [ $VStk[$#VStk], $k, $v ]; 'h' },
+	 'h;'	=> sub { 'h' },
 
-     'v,v'  => [ 'l', sub {
-                     ($pv2, $pv1) = (pop @VStk, pop @VStk);
-                     push @VStk, [ $pv1, $pv2 ];
-                 }
-               ],
+	 #
+	 # Single values/scripts.
+	 #
 
-     'l,v'  => [ 'l', sub {
-                     $pv = pop @VStk; # pop the item
-                     push @{$VStk[$#VStk]}, $pv; # push to list
-                 }
-               ],
+     '()'   => sub { push @VStk, [ ]; 'v' },
+     '(l)'  => sub { 'v' },
+     '(v)'  => sub {                    push @VStk, [pop(@VStk)]; 'v' },
+     '(n)'  => sub { my $v = pop @VStk; push @VStk, [ $v ]; push @NStk, [ $VStk[$#VStk], 0, $v ]; 'v' },
+     'v,'	=> sub {                    push @VStk, [pop(@VStk)]; 'l,' },
+     'n,'	=> sub { my $v = pop @VStk; push @VStk, [ $v ]; push @NStk, [ $VStk[$#VStk], 0, $v ]; 'l,' },
+     'l,v'	=> sub { my $v = pop @VStk; push @{$VStk[$#VStk]}, $v; 'l' }, # push to existing list
+     'l,n'	=> sub { my $v = pop @VStk; push @{$VStk[$#VStk]}, $v; push @NStk, [ $VStk[$#VStk], $#{$VStk[$#VStk]}, $v ]; 'l' },
 
-     '(v)'  => [ 'v', sub {
-                     $pv = pop @VStk; push @VStk, [ $pv ];
-                 }
-               ],
+	 #
+	 # Rules for syntax errors.  All rules containing '??' are error-recovery-rules.
+	 #
 
-     '(v,)' => [ 'v', sub { 
-                     $pv = pop @VStk; push @VStk, [ $pv ];
-                 }
-               ],
+	 '=??'	=> sub { syntax_error("invalid value after '='", ';') },
+	 '??;'	=> sub { syntax_error("invalid key/value before ';'", ';') },
+	 ',??'	=> sub { push @VStk, ''; syntax_error("invalid value after ','", ',v') },
+     '??'	=> sub { '' },
 
-     'hh' => [ 'h', sub {
-                   # Intermediate rule to merge two hashes created by "v=v;", "v;" or "hh".  The
-                   # 2nd should consist only of one pair.
+     'vv'	=> sub { my($k, $v) = splice @VStk, -2; syntax_error("missing ',' or ';'") },
+     'v=v}' => sub { my($k, $v) = splice @VStk, -2; push @VStk, { $k => $v }; warning("unterminated pair: expected ';'", 'h}') },
+     'v=v,' => sub { my($k, $v) = splice @VStk, -2; warning("pair terminated with ',': expected ';'", '??') },
+     'v=;'	=> sub { warning("missing value, or superfluous '='", 'v;') },
+     'v=}'	=> sub { warning("missing value: expected ';', not '}'", 'v;') },
+     '(v}'	=> sub { my $v = pop @VStk; syntax_error("expected ')' after value, not '}'") },
+     '{v)'	=> sub { my $v = pop @VStk; syntax_error("expected '(' before value, not '{'") },
+     '{v}'	=> sub { my $k = pop @VStk; push @VStk, { $k => '' }; warning("unterminated pair: expected ';'", 'h') },
 
-                   ($ph2) = pop @VStk;
-                   ($pk, $pv) = %$ph2;
-                   $VStk[$#VStk]->{$pk} = $pv; # reuse (reload) the 1st hash
-                 }
-             ],
+     '(v,)'	=> sub { warning("superfluous ',' at end of list", '(v)') },
+     '(l,)' => sub { warning("superfluous ',' at end of list",  'v') },
 
-     '(l)'  => [ 'v', sub { } ],
-     '(l,)' => [ 'v', sub { } ],
-     '{h}'  => [ 'v', sub { } ],
+     '{{'	=> sub { warning("non-scalar hash-key", '??') },
+     '{('	=> sub { warning("non-scalar hash-key", '??') },
 
-     '()'   => [ 'v', sub { push @VStk, [] } ],
-     '{}'   => [ 'v', sub { push @VStk, {} } ],
-    );                          # TODO: let all return undef; maybe faster?
-
-    # Add rules for syntax errors.  The error-recovering rule '??' does not try to recover from the
-    # error - it simply removes the snarly tokens and continues onward EOF.
-
-    my %err_rules =
-    (
-     '??' => [ '', sub {
-                   $Readstruct->{lerr} =~ s/\s/ /go;
-                   pr1nt('ERROR', ('syntax error', $Readstruct->{lerr}));
-                   $Errors++;
-               }
-             ],
-
-     'vv' => [ '??', sub { 
-                   my($a, $b) = (pop(@VStk), pop(@VStk));
-                   $Readstruct->{lerr} = q(missing ',' or ';' between ).qq'"$a"'.' and '.qq'"$b"'
-               }
-             ],
-
-     'lv' => [ 'l,v', sub {
-                   $pv = pop @VStk;
-                   pr1nt('WARNING', q("missing ',' in list: ").$pv.q("));
-                   push @VStk, $pv;
-               }
-             ],
-
-     'v=v}' => [ 'h}', sub {
-                     ($pv, $pk) = (pop @VStk, pop @VStk);
-                     pr1nt('WARNING', q(unterminated pair: ").$pk.q("));
-                     push @VStk, { $pk => $pv }
-                 }
-               ],
-
-     'v=v,' => [ '??', sub {
-                     pop @VStk; pop @VStk;
-                     $Readstruct->{lerr} = q(key/value pair terminated with ',' (use ';'));
-                 }
-               ],
-
-     '(v}' => [ '??', sub {
-                    pop @VStk;
-                    $Readstruct->{lerr} = "')' expected"
-                }
-              ],
-
-     '{v}' => [ 'h', sub { 
-                    $pv = pop @VStk; 
-                    push @VStk, { $pv => '' }
-                }
-              ],
-     '{v)' => [ '??', sub {
-                    pop @VStk;
-                    $Readstruct->{lerr} = "'}' expected"
-                }
-              ],
+	 'n;'	=> sub { warning("nanoscript ignored: shall be def'd as value, not key", 'v;') },
+	 'n=v;'	=> sub { warning("nanoscript ignored: shall be def'd as value, not key", 'v=v;') },
     );
 
-    foreach my $rule ((',,', '{{', '{(', '{=', '(,', 'v=;', 'v=,', 'v=}', 'v=)'))
-    {
-        $err_rules{$rule} =
-        [ '??', 
-          sub {
-              my @r = map { "'$_'" } map {
-                  $_ eq 'v' ? pop(@VStk) : $_ } split(/ */, $rule);
-              $Readstruct->{lerr} = join(' ', @r)
-          }
-        ];
+	# True syntax errors, which cannot be converted into valid rules.  The error will be printed
+	# and recorded in @Messages when '??' is actually reduced.
+
+    foreach my $errrule ((',,', ',;', ';,', ';;',
+						  '{=', '{,', '{;',
+						  '(=', '(,', '(;',
+						  '==',
+						  '(v;', '(n;',
+						  'v=,', 'v=)')) {
+		die if exists $Rules{$errrule};
+        $Rules{$errrule} = eval(<<___);
+	sub { my \@r = map { s/\\s+/ /g; \$_ } map { if (/[vnhl]/) { pop(\@VStk) }; s/v/value/; s/n/nanoscript/; s/h/hash/; s/l/list/; \$_ }
+				   split / */, '$errrule';
+		  return syntax_error("'".join(' ', \@r)."'"); }
+___
     }
 
-    if (1) {
-        while (my($rule, $def) = each %err_rules) {
-            die $rule if exists $Rules{$rule};
-            $Rules{$rule} = $def;
-        }
-    }
-
-    $rule_max = 0; $rule_min = 9;
+    my($rule_max, $rule_min) = (0, 9);
     foreach (keys %Rules) {
         $rule_min = length($_) if length($_) < $rule_min;
         $rule_max = length($_) if length($_) > $rule_max;
     }
-    die if $rule_min != 2;
-    die if $rule_max != 4;
+    die $rule_min if $rule_min != 2;
+    die $rule_max if $rule_max != 4;
 }
 
 sub pr1nt(@)
@@ -874,190 +870,163 @@ sub pr1nt(@)
     # the currently compiled file, and to STDERR (if $Data::Rlist::DEBUG).
 
     my $label = shift;
-    foreach my $fh (grep { defined } ($Fh, $DEBUG ? *STDERR{IO} : undef)) {
+	my $msg = join(': ', grep { length }
+				   ($label,
+					((defined($Readstruct) &&
+					  exists $Readstruct->{filename}) ? $Readstruct->{filename}."($.)" : ""),
+					grep { defined } @_))."\n";
+    foreach my $fh (grep { defined } ($Fh, $EchoStderr ? *STDERR{IO} : undef)) {
         next unless defined $fh;
-        print $fh "\n", map { $fh == defined($Fh) ? "# $_" : $_ }
-        join(': ', grep { length }
-             ($label,
-              ((defined($Readstruct) && exists $Readstruct->{filename}) ? $Readstruct->{filename}."($.)" : ""),
-              grep { defined } @_));
+        print $fh map { $fh == defined($Fh) ? "# $_" : $_ } $msg;
     }
+	push @Messages, $msg;
 }
 
 =head1 PACKAGE FUNCTIONS
 
+The core functions to cultivate package objects are F<new()>, F<dock()>, F<set()> and F<L</get>()>.
+When a regular package  function is called in object context some or  all arguments can be omitted.
+They  will  be  reused  from  object  attributes.   This  is  true  for  the  following  functions:
+F<L</read>()>,  F<L</write>()>,   F<L</read_string>()>,  F<L</write_string>()>,  F<L</read_csv>()>,
+F<L</write_csv>()>, F<L</read_conf>()>, F<L</write_conf>()> and F<L</keelhaul>()>.
+
+When  not called  in  object context,  however, the  first  argument has  an indifferent  meaning.
+F<L</read>()> expects an input file or string, F<L</write>()> the data to compile etc.
+
 =head2 Construction
 
-=head3 F<new()> and F<dock()>
+=head3 F<new([ATTRIBUTES])>
 
-The core functions to cultivate package objects are F<new()>, F<L</set>()> and F<L</get>()>.
-
-F<new()> allocates a F<Data::Rlist> object, accepting values peculiar to the new object.  These
-F<attributes> will be implicitly used in place of arguments that are normally passed to package
-functions - when these functions are called in the context of an object. The following functions
-may be called also as F<instance methods>:
-
-    read()              write()
-    read_string()       write_string()
-    read_csv()          write_csv()
-    read_conf()         write_conf()
-    keelhaul()
-
-When ennobled to methods these functions load their arguments from synonymous attributes of the
-object.  As usual the object is defined by the first argument.  Other arguments are optional, but
-when specified they have precedence over attributes.  Note, however, that unless these functions
-are called as methods their first argument has an indifferent meaning.  For example, F<L</read>()>
-excepts an input file or string as the first argument, F<L</write>()> the data to compile etc.
-
-F<L</dock>()> is used to exclusively link some object to the package, which means that some package
-globals are temporarily set from its attributes.  Each function that is called as method uses
-F<dock()> to localize globals and hence to lock the package.
-
-=over 4
-
-=item F<new(ATTRIBUTES)>
-
-Create a F<Data::Rlist> object from ATTRIBUTES, a hash-table. For example,
+Create a F<Data::Rlist> object from the hash ATTRIBUTES. Attributes are key/value pairs. For
+example,
 
     $self = Data::Rlist->new(-input => 'this.dat',
                              -data => $thing,
                              -output => 'that.dat');
 
-creates an object for which the call F<$self-E<gt>read()> reads from F<this.dat>, and
-F<$self-E<gt>write()> writes F<$thing> to F<that.dat>.
+creates an object  on which F<$self-E<gt>read()> reads from  F<this.dat>, and F<$self-E<gt>write()>
+writes F<$thing> to F<that.dat>.
 
-B<PARAMETERS>
+B<REGULAR OBJECT ATTRIBUTES>
 
-=over 8
+=over 4
 
-=item -input =E<gt> INPUT
+=item C<-input =E<gt> INPUT>
 
-=item -filter =E<gt> FILTER
+Defines what Rlist text to parse. INPUT shall be a filename or string reference.
 
-=item -filter_args =E<gt> FILTER-ARGS
+=item C<-filter =E<gt> FILTER>
 
-Defines what to parse. INPUT shall be a filename or string reference.  FILTER and FILTER-ARGS
-define how to preprocess an input file.  FILTER can be 1 to select the standard C preprocessor
-F<cpp>.  These attributes are applied by F<L</read>()>, F<L</read_string>()>, F<L<read_conf>()> and
-F<L</read_csv>()>.
+=item C<-filter_args =E<gt> FILTER-ARGS>
 
-=item -data =E<gt> DATA
+FILTER and FILTER-ARGS define how to preprocess an input file.  FILTER can be 1 to select the
+standard C preprocessor F<cpp>.  These attributes are applied by F<L</read>()>,
+F<L</read_string>()>, F<L</read_conf>()> and F<L</read_csv>()>.
 
-=item -output =E<gt> OUTPUT
+=item C<-data =E<gt> DATA>
 
-=item -options =E<gt> OPTIONS
+=item C<-output =E<gt> OUTPUT>
 
-=item -header =E<gt> HEADER
+=item C<-options =E<gt> OPTIONS>
 
-DATA defines the Perl data to be L<compiled|/compile> into text. OPTIONS defines L<how the text
-shall be compiled|/Compile Options>, and OUTPUT where to put it.  HEADER defines the comments: an
-array of text lines, each of which will by prefixed by a F<#> and then written at the top of the
-output file.  These attributes are applied by F<L</write>()>, F<L</write_string>()>,
+=item C<-header =E<gt> HEADER>
+
+DATA defines  the Perl data  to be  L<compiled|/compile> into text.  OPTIONS define L<how  the data
+shall be compiled|/Compile Options>,  and OUTPUT where to put it.  HEADER  defines the comments: an
+array of text lines,  each of which will by prefixed  by a F<#> and then written at  the top of the
+output   file.    These   attributes   are  applied   by   F<L</write>()>,   F<L</write_string>()>,
 F<L</write_conf>()>, F<L</write_csv>()> and F<L</keelhaul>()>.
 
-=item -delimiter =E<gt> DELIMITER
+=item C<-delimiter =E<gt> DELIMITER>
 
 Defines the field delimiter for F<.csv>-files. Applied by F<L</read_csv>()> and F<L</read_conf>()>.
 
-=item -columns =E<gt> STRINGS
+=item C<-columns =E<gt> STRINGS>
 
-Defines the column names for F<.csv>-files that, when available, are written into the first line.
-Applied by F<L</write_csv>()> and F<L</write_conf>()>.
+Defines  the  column names  for  F<.csv>-files,  then written  into  the  first  line.  Applied  by
+F<L</write_csv>()> and F<L</write_conf>()>.
 
 =back
 
 B<ATTRIBUTES THAT MASQUERADE PACKAGE GLOBALS>
 
-These attributes raise new values for package globals while instance methods are executed.  You
-will notice that some globals can also be set by the L<compile options|/Compile Options>.  But
-while these options are anonymuous hash-tables, possible shared by many objects, the below
-attributes define such options F<per object>.  This means they're charged each time a function is
-called as an instance method.  (To afford this the method internally calls F<L</dock>()>.)
+The attributes  listed below raise  new values for  package globals for  the time an  object method
+runs.  Note that some globals of  these are also set from L<compile-time options|/Compile Options>,
+and that compile options can be set per-object using F<-options>.
 
-For example, when F<$Data::Rlist::RoundScientific> is true F<Data::Rlist::L</round>()> formats the
-number in either normal or exponential (scientific) notation, whichever is more appropriate for its
-magnitude.  F<round()> is called during compilation when the C<"precision"> option is defined, in
-order to round all numbers to a certain count of decimal places.  By setting F<-RoundScientific>
-this sort of formatting can be enabled per object, not per package.
+For  example, F<Data::Rlist::L</round>()>  is called  during compilation,  when  the C<"precision">
+compile option  is defined, to round  all numbers to a  certain count of decimal  places.  When the
+F<$Data::Rlist::RoundScientific> flag  is true, F<round()> formats  the number in  either normal or
+exponential (scientific)  notation, whichever  is more appropriate  for its magnitude.   By setting
+F<-RoundScientific> this sort of formatting can be enabled per object.
 
 =over
 
-=item -MaxDepth =E<gt> INTEGER
+=item C<-InputRecordSeparator =E<gt> FLAG>
 
-=item -SafeCppMode =E<gt> FLAG
+Masquerades F<$/>, which affects how lines are read and written to and from Rlist- and CSV-files.
+You may also set F<$/> by yourself.  See L<perlport> and L<perlvar>.
 
-=item -RoundScientific =E<gt> FLAG
+=item C<-MaxDepth =E<gt> INTEGER>
+
+=item C<-SafeCppMode =E<gt> FLAG>
+
+=item C<-RoundScientific =E<gt> FLAG>
 
 Masquerades F<$Data::Rlist::MaxDepth>, F<$Data::Rlist::SafeCppMode> and
 F<$Data::Rlist::RoundScientific>.
 
-=item -DefaultCsvDelimiter =E<gt> REGEX
+=item C<-EchoStderr =E<gt> FLAG>
 
-=item -DefaultConfDelimiter =E<gt> REGEX
+Print read errors and warnings message on F<STDERR> (default: off).
 
-Masquerades F<$Data::Rlist::DefaultCsvDelimiter> (for F<L</read_csv>()>) and
-F<$Data::Rlist::DefaultConfDelimiter> (for F<L</read_conf>()>).  These globals define the default
-regexes to use when the F<-options> attribute does not specifiy L<the C<"delimiter"> regex|/Compile
-Options>.
+=item C<-DefaultCsvDelimiter =E<gt> REGEX>
 
-=item -DefaultConfSeparator =E<gt> STRING
+=item C<-DefaultConfDelimiter =E<gt> REGEX>
 
-F<L</write_conf>()> uses this attribute to masquerade F<$Data::Rlist::DefaultConfSeparator>, the
-default string to use when the F<-options> attribute does not specifiy 
-L<the C<"separator"> string|/Compile Options>.
+Masquerades F<$Data::Rlist::DefaultCsvDelimiter>  and F<$Data::Rlist::DefaultConfDelimiter>.  These
+globals define  the default regexes  to use  when the F<-options>  attribute does not  specifiy the
+L<C<"delimiter">|/Compile Options> regex.  Applied by F<L</read_csv>()> and F<L</read_conf>()>.
 
-=back
+=item C<-DefaultConfSeparator =E<gt> STRING>
 
-=item F<dock(SELF, SUB)>
-
-Wire some flittering object SELF back to the package that incubated it (this one).  
-
-F<dock()> saves some package globals and sets their new values based on SELF's attributes. Then it
-calls SUB (a code-reference) in the realm of the new globals. After SUB returned it restores the
-globals and returns what SUB had returned.
-
-While SUB runs, the package is dedicated to SELF and hence locked (F<$Data::Rlist::Locked> is
-true).
-
-The saved globals are:
-
-    $Data::Rlist::MaxDepth
-    $Data::Rlist::SafeCppMode
-    $Data::Rlist::RoundScientific
-    $Data::Rlist::DefaultCsvDelimiter,
-    $Data::Rlist::DefaultConfDelimiter
-    $Data::Rlist::DefaultConfSeparator
-
-
+Masquerades F<$Data::Rlist::DefaultConfSeparator>,  the default string to use  when the F<-options>
+attribute   does  not  specifiy   the  L<C<"separator">|/Compile   Options>  string.    Applied  by
+F<L</write_conf>()>.
 
 =back
 
-=head3 F<set()> and F<get()>
+=head3 F<dock(SELF, SUB)>
 
-=over
+Exclusively  links some  object SELF  to the  package.  This  means that  some of  SELF's attribute
+masqquerade  few  package  globals for  the  time  SUB  run.   SELF  then locks  the  package,  and
+F<$Data::Rlist::Locked>  is true.   Here is  an  example for  input preprocessed  by F<cpp>,  which
+temporarily sets F<$Data::Rlist::SafeCppMode> to 1:
 
-=item F<set(SELF[, ATTRIBUTE]...)>
+	$self = Data::Rlist->new(-SafeCppMode => 1, -filter => 1);
+
+=head2 Attribute Access
+
+=head3 F<set(SELF[, ATTRIBUTE]...)>
 
 Reset or initialize object attributes, then return SELF.  Each ATTRIBUTE is a name/value-pair.  See
 F<L</new>()> for a list of valid names.  For example,
 
     $obj->set(-input => \$str, -output => 'temp.rls', -options => 'squeezed');
 
-=item F<get(SELF, NAME[, DEFAULT])>
+=head3 F<get(SELF, NAME[, DEFAULT])>
 
-=item F<require(SELF[, NAME])>
+=head3 F<require(SELF[, NAME])>
 
-=item F<has(SELF[, NAME])>
+=head3 F<has(SELF[, NAME])>
 
-Get some attribute NAME from object SELF.  Unless NAME exists returns DEFAULT.  The F<require()>
-method has no default value, hence it dies unless NAME exists. F<has()> returns true when NAME
+Get some  attribute NAME from object SELF.   Unless NAME exists returns  DEFAULT.  The F<require()>
+method has  no default value,  hence it dies  unless NAME exists.  F<has()> returns true  when NAME
 exists, false otherwise.  For NAME the leading hyphen is optional.  For example,
 
     $self->get('foo');          # returns $self->{-foo} or undef
     $self->get(-foo=>);         # dto.
-    $self->get('foo', 42);      # returns $self->{-foo} or, unless exists, 42
-
-=back
+    $self->get('foo', 42);      # returns $self->{-foo} or 42
 
 =cut
 
@@ -1069,7 +1038,7 @@ $prototype->Data::Rlist::new(${\(join(', ', @_))})
 ___
     my %args = @_;
     bless { map { $k = $_;
-                  s/^_+//o;     # allow leading underscores
+                  s/^_+//o;			# remove leading underscores
                   s/^([^\-])/-$1/o; # prepend missing '-'
                   $_ => $args{$k}
               } keys %args }, ref($prototype) || $prototype;
@@ -1086,7 +1055,7 @@ sub set {
 sub require($$) {               # get attribute or confess
     my($self, $attr) = @_;
     my $v = $self->get($attr);
-    carp "$self->get(): missing '$attr' attribute" unless defined $v;
+    confess "$self->require(): missing '$attr' attribute:\n\t\t".join("\n\t\t", map { "$_ = $self->{$_}" } keys %$self) unless defined $v;
     return $v;
 }
 
@@ -1104,31 +1073,29 @@ sub has($$) {
 }
 
 sub dock($\&) {
+    carp "package Data::Rlist locked" if $Locked++; # TODO: use critical sections and atomic increment
     my ($self, $block) = @_;
-    carp "package Data::Rlist locked" if $Locked++;
     local $MaxDepth = $self->get(-MaxDepth=>) if $self->has(-MaxDepth=>);
     local $SafeCppMode = $self->get(-SafeCppMode=>) if $self->has(-SafeCppMode=>);
+    local $EchoStderr = $self->get(-EchoStderr=>) if $self->has(-EchoStderr=>);
     local $RoundScientific = $self->get(-RoundScientific=>) if $self->has(-RoundScientific=>);
     local $DefaultCsvDelimiter = $self->get(-DefaultCsvDelimiter=>) if $self->has(-DefaultCsvDelimiter=>);
     local $DefaultConfDelimiter = $self->get(-DefaultConfDelimiter=>) if $self->has(-DefaultConfDelimiter=>);
     local $DefaultConfSeparator = $self->get(-DefaultConfSeparator=>) if $self->has(-DefaultConfSeparator=>);
+    local $DefaultNanoscriptToken = $self->get(-DefaultNanoscriptToken=>) if $self->has(-DefaultNanoscriptToken=>);
+    local $DEBUG = $self->get(-DEBUG=>) if $self->has(-DEBUG=>);
+    local $/ = $self->get(-InputRecordSeparator=>) if $self->has(-InputRecordSeparator=>);
+	local $R;
     if (wantarray) {
-        my @r = $block->(); $Locked--; return @r;
+        my @r = $block->(); --$Locked; return @r;
     } else {
-        my $r = $block->(); $Locked--; return $r;
+        my $r = $block->(); --$Locked; return $r;
     }
 }
 
-=head2 Interface
+=head2 Public Interface
 
-This section lists the public functions to be called by users of the package.  These can be either
-called as package functions or instance methods.
-
-=head3 F<read()>, F<read_string()>, F<read_csv()> and F<read_conf()>
-
-=over
-
-=item F<read(INPUT[, FILTER, FILTER-ARGS])>
+=head3 F<read(INPUT[, FILTER, FILTER-ARGS])>
 
 Parse data from INPUT, which specifies some Rlist-text.  See also F<L</errors>()>, F<L</write>()>.
 
@@ -1142,38 +1109,44 @@ INPUT shall be either
 
 - a string scalar, in which case F<read()> assumes a file to parse.
 
-See F<L</open_input>()> for the FILTER and FILTER-ARGS parameters, which are used to preprocess an
-input file.  When an input file cannot be F<open>'d and F<flock>'d this function dies.  When INPUT
-is an object you specify FILTER and FILTER-ARGS to overload the F<-filter> and F<-filter_args>
+See F<L</open_input>()> for the FILTER and  FILTER-ARGS parameters, which are used to preprocess an
+input file.  When an input file cannot  be F<open>'d and F<flock>'d this function dies.  When INPUT
+is an  object you  specify FILTER and  FILTER-ARGS to  overload the F<-filter>  and F<-filter_args>
 attributes.
 
 B<RESULT>
 
-F<L</read>()> returns the parsed data as array- or hash-reference, or F<undef> if there was no
+F<L</read>()> returns  the parsed data  as array-  or hash-reference, or  F<undef> if there  was no
 data. The latter may also be the case when file consist only of comments/whitespace.
 
 B<NOTES>
 
-This function may die.  Dying is Perl's mechanism to raise exceptions, which can be catched with
-F<eval>. For example,
+This function may die.  Dying is Perl's mechanism to raise exceptions, which eventually can be
+catched with F<eval>.  For example,
 
     my $host = eval { use Sys::Hostname; hostname; } || 'some unknown machine';
 
-This code fragment traps the F<die> exception: when it raised F<eval> returns F<undef>, otherwise
-the result of calling F<hostname>. For F<read()> this means
+This code fragment  traps the F<die> exception to  that F<eval> returns F<undef>, or  the result of
+calling F<hostname>. The following example uses F<eval> to trap exceptions thrown by F<read()>:
 
-    $data = eval { Data::Rlist::read($tempfile) };
-    unless (defined $data) {
-        print STDERR "$tempfile not found, is locked or is empty" 
+    $object = new Data::Rlist(-input => $thingfile);
+    $thing = eval { $self->read };
+
+    unless (defined $thing) {
+        if ($self->errors) {
+            print STDERR "$thingfile has syntax errors"
+        } else {
+            print STDERR "$thingfile not found, is locked or empty"
+        }
     } else {
-        # use $data
+        # Can use $thing
             .
             .
     }
 
-=item F<read_csv(INPUT[, OPTIONS, FILTER, FILTER-ARGS])>
+=head3 F<read_csv(INPUT[, OPTIONS, FILTER, FILTER-ARGS])>
 
-=item F<read_conf(INPUT[, OPTIONS, FILTER, FILTER-ARGS])>
+=head3 F<read_conf(INPUT[, OPTIONS, FILTER, FILTER-ARGS])>
 
 Parse data from INPUT, which specifies some comma-separated-values (CSV) text.  Both functions
 
@@ -1185,54 +1158,34 @@ Parse data from INPUT, which specifies some comma-separated-values (CSV) text.  
 
 - ignore empty lines,
 
-- ignore lines begun with F<#> as comments.
+- ignore lines begun with F<#>.
 
 F<read_conf()> is a variant of F<read_csv()> dedicated to configuration files. Such files consist
 of lines of the form
 
     key = value
 
-That is, F<read_conf()> simply uses a default delimiter of C<'\s*=\s*'>, while F<read_csv()> uses
-C<'\s*,\s*'>.  Hence F<read_csv()> can be used as well for configuration files. For example, a
-delimiter of C<'\s+'> splits the line at horizontal whitespace into multiple values (but, of
-course, not within quoted strings).
-
-See also F<L</ReadCSV>()>, F<L</ReadConf>()>, F<L</write_csv>()> and F<L</write_conf>()>.
+That is, F<read_conf()>  simply uses a default delimiter of  C<'\s*=\s*'>, while F<read_csv()> uses
+C<'\s*,\s*'>.  Hence  F<read_csv()> can  be used as  well for  configuration files. For  example, a
+delimiter  of C<'\s+'>  splits the  line at  horizontal whitespace  into multiple  values  (but, of
+course,   not  from   within  quoted   strings).   For   more  information   see  F<L</ReadCSV>()>,
+F<L</ReadConf>()>, F<L</write_csv>()> and F<L</write_conf>()>.
 
 B<PARAMETERS>
 
-=over
-
-=item INPUT
-
-Please see F<L</read>()>.
-
-=item FILTER, FILTER-ARGS
-
-Please see F<L</open_input>()>.
-
-=item OPTIONS
-
-The actual difference between F<read_conf()> and F<read_csv()> is the default value for L<the
-C<"delimiter"> regex|/Compile Options> in OPTIONS:
-
-    FUNCTION    DELIMITER
-    read_csv()  '\s*,\s*'
-    read_conf() '\s*=\s*'
-
-Note that the above defaults are actually defined by the package-globals
+For INPUT see F<L</read>()>.  For FILTER, FILTER-ARGS see F<L</open_input>()>.  OPTIONS can be used
+to set the  L<C<"delimiter">|/Compile Options> regex.  For F<read_csv()>  the delimiter defaults to
+C<'\s*,\s*'>,  and  for  F<read_conf()>  to  C<'\s*=\s*'>.   These  defaults  are  defined  by  the
 F<$Data::Rlist::DefaultCsvDelimiter> and F<$Data::Rlist::DefaultConfDelimiter>.
-
-=back
 
 B<RESULT>
 
-Both functions return a list of lists.  Each embedded array defines the fields in a line, and may
+Both functions return a  list of lists.  Each embedded array defines the fields  in a line, and may
 be of variable length.
 
 B<EXAMPLES>
 
-Un/qouting of values happens implicitly.  Given a file F<db.conf>
+Un/quoting of values happens implicitly.  Given a file F<db.conf>
 
     # Comment
     SERVER      = hostname
@@ -1245,17 +1198,16 @@ the call
 
 returns (as F<$opts>)
 
-    [
-        [ 'SERVER', 'hostname' ],
-        [ 'DATABASE', 'database_name' ],
-        [ 'LOGIN', 'user,password' ]
+    [ [ 'SERVER', 'hostname' ],
+      [ 'DATABASE', 'database_name' ],
+      [ 'LOGIN', 'user,password' ]
     ]
 
 To convert such an array into a hash C<%conf>, use
 
     %conf = map { @$_ } @{ReadConf 'db.conf'};
 
-The F<L<write_conf>()> function can be used to update F<db.conf> from F<$opts>, so that
+The F<L</write_conf>()> function can be used to update F<db.conf> from F<$opts>, so that
 
     push @$opts, [ 'MAGIC VALUE' => 3.14_15 ];
 
@@ -1266,39 +1218,63 @@ yields
     SERVER = hostname
     DATABASE = database_name
     LOGIN = "user,password"
-    "MAGIC VALUE" = 3.14
+    "MAGIC VALUE" = 3.1415
 
-=item F<read_string(INPUT)>
+=head3 F<read_string(INPUT)>
 
-Calls F<L</read>()> to parse Rlist language productions from the string or string-reference INPUT.
-INPUT may be an object-reference, in which case F<read_string()> attempts to parse the
+Calls F<L</read>()> to parse Rlist language  productions from the string or string-reference INPUT.
+INPUT  may  be  an  object-reference,  in   which  case  F<read_string()>  attempts  to  parse  the
 string-reference defined by the F<-input> attribute.
 
-=back
+=head3 F<result([SELF])>
 
-=head3 F<errors()>, F<broken()> and F<missing_input()>
+Return  the last  result of  calling F<L</read()>>,  which  is either  F<undef> or  some array-  or
+hash-reference.  When  called as method (i.e., SELF  is specified) returns the  result that occured
+the last time SELF had called F<L</read>()>.
 
-=over
+=head3 F<nanoscripts([SELF])>
 
-=item F<errors([SELF])>
+Return F<undef>  or an array-ref of  nanoscripts defined by  the last call to  F<L</read>()>.  When
+called as method  returns the nanoscripts defined  by the last time SELF  had called F<L</read>()>.
+The result has the form:
 
-Returns the number of syntax errors that occurred in the last call to F<L</parse>()>.  When called
-as method (under SELF) returns the number of syntax errors that occured the last time SELF had
-called F<L</read>()>.
+	[ [ $hash_or_array_ref, $key_or_index ], # 1st nanoscript
+	  [ $hash_or_array_ref, $key_or_index ], # 2nd nanoscript
+		.
+		.
+		.
+	]
 
-=item F<broken([SELF])>
+This information defines the location of the embedded Perl script, which can then be F<eval>d.  See
+als F<evaluate_nanoscripts()>.
 
-Returns the number of times the last F<L</compile>()> crossed the zenith of
+=head3 F<evaluate_nanoscripts([SELF])>
+
+Evaluates  all nanoscripts  defined  by the  last call  to  F<L</read>()>.  When  called as  method
+evaluates the  nanoscripts defined  by the last  time SELF  had called F<L</read>()>.   Returns the
+number  of  scripts  or  0  if   none  were  available.   The  evaluation  happens  L<as  described
+here|/Embedded Perl Code>.  In short, each embedded piece of Perl sees the data, and is replaced by
+the result of F<eval>'ing it.  You can F<eval>  embedded codes on your own, by processing the array
+returned by the F<nanoscripts()> function.
+
+=head3 F<messages([SELF])>, F<errors([SELF])>, F<warnings([SELF])>
+
+Returns  the array  of messages  / syntax  errors  / warnings  that occurred  in the  last call  to
+F<L</read>()>.  Returns a list of strings.  When called as method returns the messages that occured
+the last time SELF had called F<L</read>()>.
+
+=head3 F<broken([SELF])>
+
+Returns   the   number    of   times   the   last   F<L</compile>()>    crossed   the   zenith   of
 F<$Data::Rlist::MaxDepth>. When called as method returns the information for the last time SELF had
-called F<L</read>()>.
+called  F<L</compile>()>.   Note  that  F<L</compile>()>   is  not  called  directly,  but  through
+F<L</write>()>.
 
-=item F<missing_input([SELF])>
+=head3 F<missing_input([SELF])>
 
-Returns true when the last call to F<L</parse>()> yielded F<undef> because there was nothing to
-parse.  (This means F<parse()> hadn't returned F<undef> because of syntax errors.)  When called as
-method returns the information for the last time SELF had called F<L</read>()>.
-
-=back
+Returns true when  the last call to  F<L</parse>()> yielded F<undef>, because there  was nothing to
+parse.   When  called  as method  returns  the  information  for  the  last time  SELF  had  called
+F<L</read>()>.
 
 =cut
 
@@ -1313,24 +1289,30 @@ sub read($;$$) {
 
     if (ref($input) eq __PACKAGE__) {
         # $input is an object created by Data::Rlist::new
-        $input->dock
-        (sub {
-             unless ($fcmd) {
-                 $fcmd = $input->get('-filter');
-                 $fcmdargs = $input->get('-filter_args');
-             }
-             my $ref = Data::Rlist::read($input->require(-input=>), $fcmd, $fcmdargs);
-             $input->set(-parsing => [$Errors, $Broken, $MissingInput]);
-             $ref
-         });
+        $input->dock(sub {
+						 unless ($fcmd) {
+							 $fcmd = $input->get('-filter');
+							 $fcmdargs = $input->get('-filter_args');
+						 }
+						 $R = Data::Rlist::read($input->require(-input=>), $fcmd, $fcmdargs); # returns a reference
+						 $input->set(-read_result => [$Warnings, $Errors, $Broken, $MissingInput, \@Messages]);
+						 $input->set(-nanoscripts => (@NStk ? [@NStk] : undef));
+						 $input->set(-result => $R);
+						 $R
+					 }
+					)
     } else {
         # $input is either a string (filename) or reference.
         local $| = 1 if $DEBUG;
-        print "\nData::Rlist::open_input($input, $fcmd, $fcmdargs)" if $DEBUG;
+		if ($DEBUG) {
+			print STDERR "Data::Rlist::open_input($input, $fcmd, $fcmdargs)\n" if $fcmd && $fcmdargs;
+			print STDERR "Data::Rlist::open_input($input, $fcmd)\n" if $fcmd && !$fcmdargs;
+			print STDERR "Data::Rlist::open_input($input)\n" unless $fcmd;
+		}
         return undef unless open_input($input, $fcmd, $fcmdargs);
         confess unless defined $Readstruct;
         my $data = parse();
-        print "\nData::Rlist::close_input() parser result = ", (defined $data) ? $data : 'undef' if $DEBUG;
+        print STDERR "Data::Rlist::close_input() parser result = ", (defined $data) ? $data : 'undef', "\n" if $DEBUG;
         close_input();
         return $data;
     }
@@ -1352,14 +1334,18 @@ sub read_csv($;$$$) {
          });
     } else {
         # $input is either a scalar or string-reference: we'll read linewise from a file or a
-        # string now.  Note that in case of a string $$input, open_input splits at LF or CR+LF.
+        # string now.  In case $input is a reference (string) open_input() does not call
+        # read_csv(), but splits at LF or CR+LF.  However, lexln() only chomps $/. Therefore we
+        # explicitly check for a trailing \r here.
 
         return undef unless open_input($input, $fcmd, $fcmdargs);
         confess unless defined $Readstruct;
         my $delim = complete_options($options)->{delimiter} || $DefaultCsvDelimiter;
         my @L; push @L, $Ln while lexln();
-        my @R; push @R,
-        map { [ map { maybe_unquote($_) } split_quoted($_, $delim) ] } grep { not /^\s*#|^\s*$/o } @L;
+        my @R; push @R, map { [ map { maybe_unquote($_) } split_quoted($_, $delim) ] }
+		grep { not /^\s*#|^\s*$/o } # throw away comment lines and blank lines
+		#map { s/\r+$//o; $_ }		# strip trailing \r
+		@L;
         close_input();
         return \@R;
     }
@@ -1383,12 +1369,59 @@ sub read_string($) {
     } Data::Rlist::read($r);
 }
 
+sub result(;$) {
+    my $self = shift;
+	return $self->get(-result=>) if $self;
+    return $R;
+}
+
+sub nanoscripts(;$) {
+    my $self = shift;
+	return $self->get(-nanoscripts=>) if $self;
+    return @NStk ? \@NStk : undef;
+}
+
+sub evaluate_nanoscripts(;$) {
+	my $self = shift;
+	my $ns = nanoscripts($self);
+	my $count = 0;
+	if ($ns) {
+		my $Rlist = result($self);
+		foreach (@$ns) {
+			my($this, $where, $copy_of_code) = @$_; ++$count;
+			if (ref($this) =~ 'ARRAY') {
+				my $i = int($where);
+				my $code = $this->[$i];
+				die unless $code eq $copy_of_code;
+				print "evaluating nanoscript $this\->[$i]:\n\t${\(escape($code))}\n" if $DEBUG;
+				$this->[$i] = eval $code;
+				print "\n\tresult: $this->[$i]\n" if $DEBUG;
+			} else {
+				die unless ref($this) =~ 'HASH';
+				my $code = $this->{$where};
+				die unless $code eq $copy_of_code;
+				print "evaluating nanoscript $this\->{$where}:\n\t${\(escape($code))}\n" if $DEBUG;
+				$this->{$where} = eval $code;
+				print "\n\tresult: $this->{$where}\n" if $DEBUG;
+			}
+		}
+	} return $count;
+}
+
+sub warnings(;$) {
+    my $self = shift;
+    if ($self) {
+        my $a = $self->get(-read_result=>);
+        return $a->[0] if ref $a;
+        return 0;
+    } $Warnings
+}
 
 sub errors(;$) {
     my $self = shift;
     if ($self) {
-        my $a = $self->get(-parsing=>);
-        return $a->[0] if ref $a;
+        my $a = $self->get(-read_result=>);
+        return $a->[1] if ref $a;
         return 0;
     } $Errors
 }
@@ -1396,8 +1429,8 @@ sub errors(;$) {
 sub broken(;$) {
     my $self = shift;
     if ($self) {
-        my $a = $self->get(-parsing=>);
-        return $a->[1] if ref $a;
+        my $a = $self->get(-read_result=>);
+        return $a->[2] if ref $a;
         return 0;
     } $Broken
 }
@@ -1405,89 +1438,73 @@ sub broken(;$) {
 sub missing_input(;$) {
     my $self = shift;
     if ($self) {
-        my $a = $self->get(-parsing=>);
-        return $a->[2] if ref $a;
+        my $a = $self->get(-read_result=>);
+        return $a->[3] if ref $a;
         return 0;
     } $MissingInput
 }
 
-=head3 F<write()>, F<write_csv()> and F<write_string()>
+sub messages(;$) {
+    my $self = shift;
+    if ($self) {
+        my $a = $self->get(-read_result=>);
+        return @{$a->[4]} if ref $a;
+    } return ();
+}
 
-=over
-
-=item F<write(DATA[, OUTPUT, OPTIONS, HEADER])>
+=head3 F<write(DATA[, OUTPUT, OPTIONS, HEADER])>
 
 Transliterates Perl data into Rlist text.  F<write()> is auto-exported as F<L</WriteData>()>.
 
 B<PARAMETERS>
 
-=over
+DATA is either an object generated by F<L</new>()>, or any Perl data including F<undef>.  When DATA
+is  some  F<Data::Rlist>  object  the  Perl  data  to  be  compiled  is  defined  by  its  F<-data>
+attribute. (When F<-data> refers to another Rlist object, this other object is invoked.)
 
-=item DATA
+OUTPUT defines  the place where to compile  to (filename or some  string-reference).  When F<undef>
+writes  to some  new string  to which  it returns  a reference  OUTPUT defaults  to  the F<-output>
+attribute when DATA defines an object.
 
-Either an object generated by F<L</new>()>, or any Perl data including F<undef>.  When DATA is some
-F<Data::Rlist> object the Perl data to be compiled is defined by its F<-data> attribute. (When
-F<-data> refers to another Rlist object, this other object is invoked.)
+OPTIONS  defines how  to compile  the text  from DATA.   The argument  defaults to  the F<-options>
+attribute when  DATA is  an object.   When F<undef> or  C<"fast"> uses  F<L</compile_fast>()>, when
+C<"perl"> uses F<L</compile_Perl>()>, otherwise F<L</compile>()>.
 
-=item OUTPUT
-
-Where to compile to.  Defaults to the F<-output> attribute when DATA defines an object.  Defines a
-filename to create, or some string-reference.  When F<undef> writes to some new string to which it
-returns a reference
-
-=item OPTIONS
-
-How to compile the text from DATA.  Defaults to the F<-options> attribute when DATA is an object.
-When F<undef> or C<"fast"> uses F<L</compile_fast>()>, when C<"perl"> uses F<L</compile_Perl>()>,
-otherwise F<L</compile>()>.
-
-=item HEADER
-
-Reference to an array of strings that shall be printed literally at the top of an output
-file. Defaults to the F<-header> attribute when DATA is an object.
-
-=back
+HEADER is  a reference to  an array of  strings that shall  be printed literally  at the top  of an
+output file. Defaults to the F<-header> attribute when DATA is an object.
 
 B<RESULT>
 
-When F<write()> creates a file it returns 0 for failure or 1 for success.  Otherwise it returns a
+When F<write()> creates a  file it returns 0 for failure or 1 for  success.  Otherwise it returns a
 string reference.
 
 B<EXAMPLES>
 
     $self = new Data::Rlist(-data => $thing, -output => $output);
 
-    $self->write;   # Write into some file (if $output is a filename)
-                    # or string (if $output is a string reference).
+    $self->write;   # Compile $thing into a file ($output is a filename)
+                    # or string ($output is a string reference).
 
-    new Data::Rlist(-data => $self)->write; # Another way to do it :-)
+    Data::Rlist::write($thing, $output);    # dto., but using the functional interface.
 
-    Data::Rlist::write($thing, $output);    # dto., applying the functional interface
-
-    print $self->make_string;               # Print $thing to stdout.
-
+    print $self->make_string;               # Print $thing to STDOUT.
     print Data::Rlist::make_string($thing); # dto.
-
     PrintData($thing);                      # dto.
 
-=item F<write_csv(DATA[, OUTPUT, OPTIONS, COLUMNS, HEADER])>
+=head3 F<write_csv(DATA[, OUTPUT, OPTIONS, COLUMNS, HEADER])>
 
-=item F<write_conf(DATA[, OUTPUT, OPTIONS, HEADER])>
+=head3 F<write_conf(DATA[, OUTPUT, OPTIONS, HEADER])>
 
-Write DATA as comma-separated-values (CSV) to file or string OUTPUT.  F<write_conf()> writes
-configuration files where each line contains a tagname, a separator and a value.  The main
+Write  DATA as  comma-separated-values  (CSV) to  file  or string  OUTPUT.  F<write_conf()>  writes
+configuration  files where  each  line contains  a  tagname, a  separator and  a  value.  The  main
 difference between F<write_conf()> and F<write_csv()> are the default values for C<"separator"> and
-C<"auto_quote"> (see OPTIONS below).
+C<"auto_quote">.
 
 B<PARAMETERS>
 
-=over
-
-=item DATA, OUTPUT
-
-Please see F<L</write>()>.  Like with F<write()> DATA defines the data to be compiled.  But because
-of the limitations of CSV-files this may not be just any Perl data.  It must be a reference to an
-array of array references, where each contained array defines the fields. For example,
+For DATA and OUTPUT  see F<L</write>()>. DATA defines the data to be  compiled.  But because of the
+limitations of CSV-files this may not be just any Perl data.  It must be a reference to an array of
+array references.  For example,
 
     [ [ a, b, c ],      # line 1
       [ d, e, f, g ],   # line 2
@@ -1495,17 +1512,15 @@ array of array references, where each contained array defines the fields. For ex
         .
     ]
 
-Likewise, F<write_conf()> expects
+and for F<write_conf()>
 
     [ [ tag, value ],   # line 1
         .
         .
     ]
 
-=item OPTIONS
-
-From L<OPTIONS|/Compile Options> is read the comma-separator (C<"separator">), how to quote
-(C<"auto_quote">), the linefeed (C<"eol_space">) and the numeric precision (C<"precision">).  The
+From  L<OPTIONS|/Compile  Options> is  read  the  comma-separator  (C<"separator">), how  to  quote
+(C<"auto_quote">), the  linefeed (C<"eol_space">) and the numeric  precision (C<"precision">).  The
 defaults are:
 
     FUNCTION        SEPARATOR   AUTO-QUOTING
@@ -1513,26 +1528,18 @@ defaults are:
     write_csv()     ','         no
     write_conf()    ' = '       yes
 
-When OPTIONS is omitted, in an object context this argument is read from the F<-options> attribute.
+Optionally COLUMNS  (as an array-referernce) specify  the column names  to be written as  the first
+line.  The optional HEADER  array is written as F<#>-comments before the  actual data.  When called
+as methods, DATA, OPTIONS,  COLUMNS and HEADER defaults to the value  of the F<-data>, F<-options>,
+F<-columns> and F<-header> attributes.
 
-=item COLUMNS
-
-If specified this shall be an array-ref defining the column names to be written as the first line.
-When this parameter is omitted, in an object context this argument is read from the F<-columns>
-attribute.
-
-=item HEADER
-
-If specified all strings in this array are written as F<#>-comments before the actual data.  When
-this parameter is omitted, in an object context this argument is read from the F<-header>
-attribute.
-
-=back
+Note that F<write_csv()> uses  the current value of F<$/> to separate  lines. When called as method
+you may temporarily overload F<$/> using the F<-InputRecordSeparator> attribute.
 
 B<RESULT>
 
-When a file was created both function return 0 for failure or 1 for success.  Otherwise they return
-a string reference.
+When a  file was  created both function  return 0 for  failure, or  1 for success.   Otherwise they
+return a string reference (the compiled text).
 
 B<EXAMPLES>
 
@@ -1542,7 +1549,7 @@ Functional interface:
 
     WriteCSV($thing, "foo.dat");
 
-    WriteCSV($thing, "foo.dat", { separator => '; ' }, [qw/GBKNR VBKNR EL LaD LaD_V/]);
+    WriteCSV($thing, "foo.dat", { separator => '; ' }, [qw/GBKNR VBKNR EL LaD/]);
 
     WriteCSV($thing, \$target_string);
 
@@ -1561,63 +1568,57 @@ Object-oriented interface:
 
     $object->write_csv;         # Write $thing as CSV to $target_string
 
-Please see F<L<read_csv>()> for more examples.
+Please see F<L</read_csv>()> for more examples.
 
-=item F<write_string(DATA[, OPTIONS])>
+=head3 F<write_string(DATA[, OPTIONS])>
 
-Stringify any Perl DATA and return a reference to the string.
+Stringify any Perl data  DATA and return a reference to the  string.  Works like F<L</write>()> but
+always compiles  to a new  string to which  it returns a  reference.  Consequently, when  called as
+method this function  does not use the  F<-output> and F<-options> attributes, and  the default for
+OPTIONS is L<C<"string">|/Predefined Options>.
 
-Like F<L</write>()> but always compiles to a new string to which it returns a reference.  This
-means, when called as method and unlike F<L</write>()> this function does not use the F<-output>
-attribute.  Also it does not use F<-options>; when OPTIONS are omitted they default to
-L<C<"string">|/Predefined Options>.
+=head3 F<make_string(DATA[, OPTIONS])>
 
-=back
-
-=head3 F<make_string()> and F<keelhaul()>
-
-=over
-
-=item F<make_string(DATA[, OPTIONS])>
-
-Stringify any Perl DATA and return the string.  This function actually is an alias for
-F<${Data::Rlist::L<write_string>(DATA, OPTIONS)}>.  Note, however, that OPTIONS default to
-L<C<"default">|/Predefined Options>, not C<"string">.  For example,
+Stringify   any   Perl   dat   DATA   and   return  the   string   value.    OPTIONS   default   to
+L<C<"default">|/Predefined Options>.  For example,
 
     print "\n\$thing dumped: ", Data::Rlist::make_string($thing);
 
     $self = new Data::Rlist(-data => $thing);
 
-    print "\n\$thing dumped (again): ", $self->make_string;
+    print "\nsame \$thing dumped: ", $self->make_string;
 
-=item F<keelhaul(DATA[, OPTIONS])>
+=head3 F<keelhaul(DATA[, OPTIONS])>
 
-Do a deep copy of DATA according to L<OPTIONS|/Compile Options>.  DATA is any Perl data, or some
-F<Data::Rlist> object.  F<keelhaul()> first compiles DATA to Rlist text, then restores the data
-from this text.  Hence by "keelhauling data" one can adjust the accuracy of numbers, break
-circular-references and drop F<\*foo{THING}>s.
+Do a  deep copy of DATA  according to L<OPTIONS|/Compile Options>.   DATA is any Perl  data or some
+F<Data::Rlist>  object.   F<keelhaul()> first  compiles  arbitary Perl  data  to  Rlist text,  then
+restores the data from exactly this text.  By "keelhauling data" one can therefore
 
-This is especially useful when DATA had been hatched by some other code, and you don't know whether
-it is hierachical, or if typeglob-refs nist inside.  You may then simply keelhaul it to clean it
-from its past.  Also multiple data sets can be brought to the same, common basis.
+- adjust the accuracy of numbers, 
 
-For example, to brings all numbers in
+- break circular-references and 
 
-    $thing = { foo => [[.00057260], -1.6804e-4] };
+- drop F<\*foo{THING}>s.
+
+Such a functionality  is useful when DATA had been  hatched by some other code,  and you don't know
+whether it is hierachical, or if typeglob-refs  nist inside.  You may then simply F<keelhaul> it to
+clean it  from its (wild) past.  Multiple  data sets can so  be brought to the  same, common basis.
+For example, to bring all numbers in
+
+    $thing = { foo => [ [ .00057260 ], -1.6804e-4 ] };
 
 to a certain accuracy, use
 
-    $deep_copy = Data::Rlist::keelhaul($thing, { precision => 4 });
+    $deep_copy_of_thing = Data::Rlist::keelhaul($thing, { precision => 4 });
 
-to get a F<$deep_copy> (of F<$thing>) as
+All number scalars in F<$thing> are are  rounded to 4 decimal places, so they're finally comparable
+as floating-point numbers.  To F<$deep_copy_of_thing> is assigned the hash-reference
 
-    { foo => [[0.0006], -0.0002] }
+    { foo => [ [ 0.0006 ], -0.0002 ] }
 
-All number scalars were rounded to 4 decimal places, so they're finally comparable as
-floating-point numbers. Likewise one can convert all floats to integers:
+Likewise one can convert all floats to integers:
 
-    $make_integers =
-        new Data::Rlist(-data => $thing, -options => { precision => 0 });
+    $make_integers = new Data::Rlist(-data => $thing, -options => { precision => 0 });
 
     $thing_without_floats = $make_integers->keelhaul;
 
@@ -1630,13 +1631,11 @@ been built.  For example,
 
     $deep_copy = new Data::Rlist(-data => $thing)->keelhaul;
 
-You may then bet that
+It is then guarantee that the following statement never throws:
 
     die if deep_compare($deep_copy, ReadData(\$rlist_text));
 
-will never die.  (It shouldn't.)
-
-B<NOTES>
+B<EFFECTS>
 
 F<keelhaul()> won't throw F<die> nor return an error, but be prepared for the following effects:
 
@@ -1654,12 +1653,12 @@ F<IO>, F<GLOB> and F<FORMAT> references have been converted into strings.
 
 =item *
 
-Depending on the compile options F<CODE> references were called, deparsed back into their function
+Depending on the compile options, F<CODE> references were invoked, deparsed back into their function
 bodies, or dropped.
 
 =item *
 
-Depending on the compile options floats had been rounded.
+Depending on the compile options floats have been rounded, or have been converted to integers.
 
 =item *
 
@@ -1667,51 +1666,43 @@ F<undef>'d array elements had been converted into the default scalar value C<"">
 
 =item *
 
-Anything deeper than F<$Data::Rlist::MaxDepth> had been thrown away.
+Anything deeper than F<$Data::Rlist::MaxDepth> had been thrown away.  However, this only would
+happen when F<$Data::Rlist::MaxDepth> is not 0.
 
 =item *
 
-Yet no special methods are triggered to "freeze" and "thaw" an object is called before compiling it
-into text, or after parsing it from text.
+When the data contains objects, no special methods are triggered to "freeze" and "thaw" the
+objects.
 
 =back
 
 See also F<L</compile>()>, F<L</equal()>> and F<L</deep_compare>()>
 
-=back
-
 =head2 Static Interface
 
-=head3 F<predefined_options()> and F<complete_options()>
-
-=over
-
-=item F<predefined_options([PREDEF-NAME])>
+=head3 F<predefined_options([PREDEF-NAME])>
 
 Get the hash-ref F<$Data::Rlist::PredefinedOptions{PREDEF-NAME}>.  PREDEF-NAME defaults to
-L<C<"default">|/Predefined Options>, the options for writing files.
+L<C<"default">|/Predefined Options> (i.e., the options for writing files).
 
-=item F<complete_options([OPTIONS[, BASIC-OPTIONS]])>
+=head3 F<complete_options([OPTIONS[, BASIC-OPTIONS]])>
 
-Completes OPTIONS with BASIC-OPTIONS: all pairs not already in OPTIONS are copied from
-BASIC-OPTIONS.  Both arguments define hashes or some L<predefined options name|/Predefined
-Options>, and default to L<C<"default">|/Predefined Options>, the options for writing files.
-
-This function returns a new hash of L<compile options|/Compile Options>.  (Even when OPTIONS
-defines a hash it is copied into a new one.)  For example,
+Completes  OPTIONS  with  BASIC-OPTIONS:  all  pairs   not  already  in  OPTIONS  are  copied  from
+BASIC-OPTIONS.   Both  arguments  define  hashes  or  some  L<predefined  options  name|/Predefined
+Options>, and default to L<C<"default">|/Predefined Options>.   This function returns a new hash of
+L<compile options|/Compile  Options>.  (Even when OPTIONS  defines a hash  it is copied into  a new
+one.)  For example,
 
     $options = complete_options({ precision => 0 }, 'squeezed')
 
 merges the predefined options for L<C<"squeezed">|/Predefined Options> text (no whitespace at all,
 no here-docs, numbers rounded) with a numeric precision of 0.  This converts all floats to
-integers.
+integers.  The following call completes F<$them> by some other hash:
 
     $options = complete_options($them, { delimiter => '\s+' })
 
-completes F<$them> by some other hash (that is, copies C<"delimiter"> unless such a key exists in
-F<$them>). However, F<$them> is not touched.
-
-=back
+That  is, it  copies C<"delimiter">  unless such  a  key already  exists into  F<$them>. Note  that
+F<$them> itself isn't modified.
 
 =cut
 
@@ -1798,7 +1789,8 @@ sub write($;$$$)
             my $host = eval { use Sys::Hostname; hostname; } || 'some unknown machine';
             my $uid = getlogin || getpwuid($<);
             my $tm = localtime;
-            my $prec = (ref $options and defined $options->{precision}) ? $options->{precision} : undef;
+            my $prec; $prec = $options->{precision} if ref $options and defined $options->{precision};
+			my $eol = $/; $eol = $options->{eol_space} if ref $options and defined $options->{eol_space};
             my @header = 
             map { (length) ? "# $_\n" : "#\n" }
             (($to_stdout ? () : 
@@ -1810,7 +1802,7 @@ sub write($;$$$)
               sprintf('Numerical precision: floating-point.')),
              "Compile options: $optname.", 
              ($header ? ("", @$header) : ("")));
-            print $fh @header, "\n";
+            print $fh @header, $eol;
 
             unless ($fast || $perl) {
                 $result = 1 if compile($data, $options, $fh);
@@ -1818,8 +1810,8 @@ sub write($;$$$)
                 # Note that compile_fast() and compile_Perl() both return a reference to
                 # $Data::Rlist::R.
                 $result = 1;
-                print $fh ${compile_fast($data)} if $fast;
-                print $fh ${compile_Perl($data)} if $perl;
+                print $fh ${compile_fast($data)}.$eol if $fast;
+                print $fh ${compile_Perl($data)}.$eol if $perl;
             } close $fh;
         } else {
             # Compile $data into string and return a reference to it.
@@ -1864,19 +1856,21 @@ sub write_csv($;$$$$)
         # created, dies. Otherwise returns 1.
         #
         # Unless a value looks like a number the value is quote()d.  read_csv() uses split_quoted()
-        # which keeps quotes and backslashes, then maybe_unquote()s each value.
+        # which keeps quotes and backslashes, then maybe_unquote()s each value.  Note that quoting
+        # is generally necessary, because strings could also contain commas.
 
         $options = complete_options($options, 'default');
         my $to_string = ref $output || not defined $output;
-        my($separator, $linefeed, $prec, $auto_quote) = map { $options->{$_} } qw/separator eol_space precision auto_quote/;
+        my($separator, $prec, $auto_quote) = map { $options->{$_} } qw/separator precision auto_quote/;
+		my $eol = $/; $eol = $options->{eol_space} if ref $options and defined $options->{eol_space}; $eol ||= "\n";
         my $result = '';
-        $auto_quote = 0 unless defined $auto_quote; # by default quote all non-numbers
-        $result.= join($separator, @$columns).$linefeed if $columns;
-        $result.= join($linefeed, map {
+        $auto_quote = 0 unless defined $auto_quote;
+        $result.= join($separator, @$columns).$eol if $columns;
+        $result.= join($eol, map {
             join($separator, map { is_number($_)
                                    ? (defined($prec) ? round($_, $prec) : $_)
-                                   : ($auto_quote ? maybe_quote($_) : quote($_)) 
-                               } @$_) } @$data) if @$data;
+                                   : ($auto_quote ? maybe_quote($_) : $_)
+                               } @$_) } @$data).$eol if @$data;
 
         if ($to_string) {
             if (ref $output) {
@@ -1945,22 +1939,18 @@ sub keelhaul($;$) {
 
 =head2 Implementation
 
-=head3 F<open_input()> and F<close_input()>
+=head3 F<open_input(INPUT[, FILTER, FILTER-ARGS])>
 
-=over
+=head3 F<close_input()>
 
-=item F<open_input(INPUT[, FILTER, FILTER-ARGS])>
-
-=item F<close_input()>
-
-Open/close Rlist text file or string INPUT for parsing. Used internally by F<L</read>()> and
+Open/close  Rlist text  file or  string INPUT  for parsing.  Used internally  by  F<L</read>()> and
 F<L</read_csv>()>.
 
 B<PREPROCESSING>
 
-If specified the function preprocesses the INPUT file using FILTER.  Use the special value 1 to
-select the default C preprocessor (precisely, F<gcc -E -Wp,-C>).  FILTER-ARGS is an optional string
-of additional command-line arguments appended to FILTER.  For example,
+The function  can preprocess the INPUT  file using FILTER.  Use  the special value 1  to select the
+default  C preprocessor  (F<gcc  -E -Wp,-C>).   FILTER-ARGS  is an  optional  string of  additional
+command-line arguments to be appended to FILTER.  For example,
 
     my $foo = Data::Rlist::read("foo", 1, "-DEXTRA")
 
@@ -1968,7 +1958,7 @@ eventually does not parse F<foo>, but the output of the command
 
     gcc -E -Wp,-C -DEXTRA foo
 
-Hence within F<foo> C-preprocessor-statements are allowed:
+Hence within F<foo> C-preprocessor-statements become possible
 
     {
     #ifdef EXTRA
@@ -1982,11 +1972,11 @@ Hence within F<foo> C-preprocessor-statements are allowed:
 
 B<SAFE CPP MODE>
 
-This slightly esoteric mode involves F<sed> and a temporary file.  It is enabled by setting
-F<$Data::Rlist::SafeCppMode> to 1 (the default).  It protects single-line F<#>-comments when FILTER
-begins with either F<gcc>, F<g++> or F<cpp>.  F<L</open_input>()> then additionally runs F<sed> to
-convert all input lines beginning with whitespace plus the F<#> character. Only the following
-F<cpp>-commands are excluded, and only when they appear in column 1:
+This mode uses F<sed> and a  temporary file.  It is enabled by setting F<$Data::Rlist::SafeCppMode>
+to 1  (the default is  0).  It  protects single-line F<#>-comments  when FILTER begins  with either
+F<gcc>, F<g++> or  F<cpp>.  F<L</open_input>()> then additionally runs F<sed>  to convert all input
+lines beginning  with whitespace plus the  F<#> character.  Only the  following F<cpp>-commands are
+excluded, and only when they appear in column 1:
 
 - F<#include> and F<#pragma>
 
@@ -1994,15 +1984,11 @@ F<cpp>-commands are excluded, and only when they appear in column 1:
 
 - F<#if>, F<#ifdef>, F<#else> and F<#endif>.
 
-For all other lines F<sed> converts F<#> into F<##>. This prevents the C preprocessor from
-evaluating them.  But because of Perl's limited F<open()> function, which isn't able to dissolve
-arbitary pipes, the invocation of F<sed> requires a temporary file (created in the same directory
-as the input file).  F<L</lexln>()>, the function that feeds the lexical scanner with lines, then
-converts F<##> back into comment lines.
-
-Alternately, use F<//> and F</* */> comments and set F<$Data::Rlist::SafeCppMode> to 0.
-
-=back
+For  all other  lines F<sed>  converts F<#>  into  F<##>.  This  prevents the  C preprocessor  from
+evaluating them.  Because  of Perl's limited F<open()> function, which isn't  able to dissolve long
+pipes, the invocation  of F<sed> requires a temporary  file.  The temporary file is  created in the
+same directory as  the input file.  When you  only use F<//> and F</* */>  comments, however, "Safe
+CPP Mode" is not required.
 
 =cut
 
@@ -2042,35 +2028,41 @@ sub open_input($;$$)
                     if ($fcmd =~ /^(gcc|g\+\+|cpp)/i) {
                         # Safe cpp mode. Filter input with sed:
                         #
-                        # (1) prefix the supported preprocessor commands with a few blanks,
-                        #     e.g. "#if 0\n" to " #if 0\n".
+						# (1) Because known #-commands must start at column 1 we first escape all
+						#     indented '#'s into '##'s:
+						#			"(^ +)#" -> '$1\#'
+						#
+                        # (2) Next we prefix the known commands with a blank, e.g.
+                        #			"#if 0" -> " #if 0"
                         #
-                        # (2) convert '#' at column 1 into '##'. The lexln() function then converts
-                        #     '^##' back to '#'.
+                        # (3) Finally we escape all unknown #-commands at column 1:
+						#			"^#" -> "\#"
+						#
+						# The lexln() function then converts escape #s in the preprocessed file
+						# back:
+						#
+						#			"(^ *)\#" -> "$1#"
                         #
-                        # This output is then preprocessed.  Note that open() does not support true
-                        # pipes, i.e. more than one command. We've to create a temporary file.
-                        # This file will receive the output of sed, accessible from
-                        # $Readstruct->{fh}.
+						# The above regexes are in perl (not sed) syntax.  This output is then
+                        # preprocessed.  Since the builtin open() does not support true pipes a
+                        # temporary file receives the output of sed.
 
-                        my $sedfh;
-                        open($sedfh,
-                             "sed ".
-                             "'s/^#\\(include\\|pragma\\|if\\|ifdef\\|else\\|endif\\|define\\|undef\\)/  #\\1/;".
-                             " s/^#/##/' <$input 2>nul |") ||
-                             die("\nERROR: input file '$fcmd': $!");
-                        my $tmpfh; $input = "$input.tmp0";
-                        $input++ while -e $input;
-                        $Readstruct->{tmpfile} = $input;
-                        open ($tmpfh, ">$input") || die("\nERROR: temporary file '$input': $!");
-                        print $tmpfh readline($sedfh);
-                        close $tmpfh;
-                        close $sedfh;
+						my($sedfh, $tmpfh);
+						open($sedfh,
+							 "sed '".join('; ', ("s/^\\([ \t][ \t]*\\)#/\\1\\\\#/", # many seds don't recognize \t; hence insert literally
+												 "s/^#\\(include\\|pragma\\|if\\|ifdef\\|else\\|endif\\|define\\|undef\\)/ #\\1/",
+												 "s/^#/\\\\#/")).";' <$input 2>nul |") || die "\nERROR: input file '$fcmd': $!";
+						my($tmpinput, $i) = (undef, 0);
+						do { $tmpinput = $input.'.tmp'.$i++ } while -e $tmpinput;
+						$Readstruct->{tmpfile} = $input = $tmpinput; # will be removed in close_input()
+						open ($tmpfh, ">$input") || die "\nERROR: temporary file '$input': $!";
+						print $tmpfh readline($sedfh);
+						close $tmpfh;
+						close $sedfh;
                     }
                 }
 
-                # Open the file for preprocessing.  If $SafeCppMode we don't open file $input, but
-                # $Readstruct->{tmpfile}.
+                # Open the file $input for preprocessing.
 
                 unless (open($Readstruct->{fh}, "$fcmd $input 2>nul |")) {
                     $Readstruct = undef;
@@ -2080,11 +2072,11 @@ sub open_input($;$$)
 
             if (defined $Readstruct) {
                 $ReadFh = $Readstruct->{fh};
-                $LnArray = undef; 
-                $Ln = '';
+                $LnArray = undef;
+				$Ln = '';
             }
         } else {
-            # Input is string reference.  Split it into lines at LF or CR+LF Note that it isn't
+            # Input is a string reference.  Split it into lines at LF or CR+LF. Note that it isn't
             # necessary for the string to have newlines.
 
             carp "cannot preprocess strings" if $fcmd;
@@ -2104,20 +2096,16 @@ sub close_input()
         close($Readstruct->{fh});
     }
     if ($Readstruct->{tmpfile}) {
-        unlink ($Readstruct->{tmpfile}) || 
-        croak "\nERROR: remove temporary file '$Readstruct->{tmpfile}': $!";
+		unlink($Readstruct->{tmpfile}) ||
+		croak "\nERROR: could not temporary file '$Readstruct->{tmpfile}': $!";
     }
     $LnArray = $Ln = $Readstruct = undef
 }
 
-=head3 F<lex()> and F<parse()>
+=head3 F<lex()>
 
-=over
-
-=item F<lex()>
-
-Lexical scanner.  Called by F<L</parse>()> to split the current line into tokens.  F<lex()> reads
-F<#> or F<//> single-line-comment and F</* */> multi-line-comment as regular white-spaces.
+Lexical scanner.  Called  by F<L</parse>()> to split the current line  into tokens.  F<lex()> reads
+F<#>  or  F<//>  single-line-comment  and  F</* */>  multi-line-comment  as  regular  white-spaces.
 Otherwise it returns tokens according to the following table:
 
     RESULT      MEANING
@@ -2139,101 +2127,150 @@ F<lex()> appends all here-doc-lines with a newline character. For example,
         test1
 
 is effectively read as C<"a\nb\n">, which is the same value as the equivalent here-doc in Perl has.
-Hence the purpose of the last character (the newline in the last line) is not just to separate the
-last line from the delimiter.  As a consequence, not all strings can be encoded as a here-doc.  For
-example, it might not be quite obvious to many programmers that C<"foo\nbar"> has no
-here-doc-equivalent.
+So, not all  strings can be encoded as a  here-doc.  For example, it might not  be quite obvious to
+many programmers that C<"foo\nbar"> cannot be expressed as here-doc.
 
-=item F<lexln()>
+=head3 F<lexln()>
 
-Read the next line of text from the input.  Return 0 if F<L</at_eof>()>, 1 otherwise.
+Read the next line of text from the current input.  Return 0 if F<L</at_eof>()>, 1 otherwise.
 
-=item F<at_eof()>
+=head3 F<at_eof()>
 
-Return true if current input file / string array is exhausted, false otherwise.
+Return true if current input file/string is exhausted, false otherwise.
 
-=item F<parse()>
+=head3 F<parse()>
 
-Read Rlist language productions from current input, defined by package variables.  This is a fast,
-non-recursive parser driven by the parser map F<%Data::Rlist::Rules>, and fed by F<L</lex>()>.
-
-F<parse()> is called internally by F<L</read>()>.
-
-=back
+Read Rlist language productions from current input.  This is a fast, non-recursive parser driven by
+the  parser map  F<%Data::Rlist::Rules>,  and fed  by  F<L</lex>()>.  It  is  called internally  by
+F<L</read>()>.
 
 =cut
 
-our $g_re_lex_wsp = qr/^\s+/;
-our $g_re_lex_num = qr/^($g_re_float_here)/; # number constant
-our $g_re_lex_quoted_string = qr/^\"((?:\\[nrbftv\"\'\\]|\\[0-7]{3}|[^\"])*)\"/; # quoted string constant
-our $g_re_lex_name = qr/^($g_re_symbol_here)/; # symbolic name without quotes
-our $g_re_lex_quoted_name = qr/^"($g_re_symbol_here)"/; # symbolic name in quotes
-our $g_re_lex_punct = qr/^([$g_re_punct_cset])/;
+# Local variables of lex(). Lexical variables are initialized at compile time, hence they're
+# available in INIT.
+
+my $C1;
+my $RELexNumber = qr/^($REFloatHere)/;	# number constant
+my $RELexSymbol = qr/^($RESymbolHere)/; # symbolic name without quotes
+my $RELexQuotedString = qr/^\"((?:\\[nrbftv\"\'\\]|\\[0-7]{3}|[^\"])*)\"/; # quoted string constant
+my $RELexQuotedSymbol = qr/^"($RESymbolHere)"/; # symbolic name in quotes
+my $RELexPunctuation = qr/^[$REPunctuationCharacter]/;
+
+BEGIN {
+	$REIsPunct[$_] = 0 foreach  0..255;
+	$REIsPunct[ 61] = 1;			# =
+	$REIsPunct[ 44] = 1;			# ,
+	$REIsPunct[ 59] = 1;			# ;
+	$REIsPunct[123] = 1;			# {
+	$REIsPunct[125] = 1;			# }
+	$REIsPunct[ 40] = 1;			# (
+	$REIsPunct[ 41] = 1;			# )
+
+	$REIsDigit[$_] = 0 foreach  0..255;
+	$REIsDigit[$_] = 1 foreach 48.. 57;
+	$REIsDigit[43] = $REIsDigit[45] = $REIsDigit[46] = 1;
+}
 
 sub lex()
 {
-    # First throw away leading whitespace.  Since "/o" only affects variable substitution we use
-    # precompiled regular expressions.  Set $C1 to ASCII of first character
+    # First reduce leading whitespace and empty lines. Set $C1 to the ASCII code of the first
+    # character in the current line $Ln.
+	#
+	# The Perl \s regex matches  [ \t\n\r\f], but
+	#	($C1 <= 32 && ($C1 == 32 || $C1 == 9 || $C1 == 10 || $C1 == 13 || $C1 == 12))
+	# is more efficient.  However, to make it even faster we use simply
+	#	($C1 <= 32)
 
-    LEX_NEXT_TOKEN:
-    $Ln =~ s/$g_re_lex_wsp//o;
-    while (length($Ln) == 0) {
-        return undef unless lexln();
-        $Ln =~ s/$g_re_lex_wsp//o;
-    }
-    $C1 = ord($Ln);
+	unless (defined $Ln) {
+		return undef unless lexln(); # fetch next $Ln or stop
+	}
+    NEXTC1:
+	unless ($C1 = ord($Ln)) { # ord returns 0 on empty strings
+		return undef unless lexln();
+		goto NEXTC1;
+	}
+	if ($C1 <= 32) {
+		$Ln =~ s/^\s+//o;
+		goto NEXTC1 unless $C1 = ord($Ln);
+	}
 
-    # Jump over comments. '//' or '#' single-line-comment, '/*' multi-line-comment.
+	# Puncutators = , ; { } ( )
 
-    if ($C1 == 35) {            # '#'
-        $Ln = '';
-        goto LEX_NEXT_TOKEN;
-    } elsif ($C1 == 47) {       # '/'
-        if ($Ln =~ /^\/[\*\/]/o) {
-            goto LEX_NEXT_TOKEN if $Ln =~ s/^\/\*.*\*\/\s*//x;
-            if ($Ln =~ /^\/\//o) {
-                $Ln = ''; goto LEX_NEXT_TOKEN;
-            }
-            while (lexln()) {
-                if ($Ln =~ /\*\/(.*)/) {
-                    $Ln = $1; goto LEX_NEXT_TOKEN;
-                }
-            }
-            $Readstruct->{lerr} = q(unterminated comment);
-            return '??';
-        }
-    }
+	#if ($Ln =~ $RELexPunctuation) {
+	#if ($C1 == 61 || $C1 == 44 || $C1 == 59 || $C1 == 123 || $C1 == 125 || $C1 == 40 || $C1 == 41) {
+	if ($REIsPunct[$C1]) {
+		$Ln = substr($Ln, 1);
+		return chr($C1);
+	}
 
     # Number scalars. C language single/double-precision numbers.  Test if $C1 is a digit, '.', '-'
     # or '+'.
 
-    if (($C1 >= 48 && $C1 <= 57) || $C1 == 46 || $C1 == 45 || $C1 == 43) {
-        if ($Ln =~ s/$g_re_lex_num//o) {
-            push @VStk, $1;
-            #print "\nreading number $1";
-            return 'v';
-        } elsif ($C1 >= 48 && $C1 <= 57) {
-            $Readstruct->{lerr} = qq'invalid number "$Ln"';
-            return '??';
-        } elsif ($Ln =~ s/$g_re_lex_name//o) {
-            # Symbolic name (unquoted string) beginning with '-'.
+    #if (($C1 >= 48 && $C1 <= 57) || $C1 == 43 || $C1 == 45 || $C1 == 46) {
+	if ($REIsDigit[$C1]) {
+        if ($Ln =~ s/$RELexNumber//o) {
             push @VStk, $1;
             return 'v';
+        } elsif (($C1 == 45 || $C1 == 46) && $Ln =~ s/$RELexSymbol//o) {
+            # Symbolic name (unquoted string) beginning with '-' or '.'.
+            push @VStk, $1;
+			return 'v';
         } else {
-            $Readstruct->{lerr} = qq'invalid number "$Ln"';
-            return '??';
+            return syntax_error(qq'unrecognized number "$Ln"');
         }
     }
 
     # String scalars, un/quoted, here-docs.
 
-    if ($C1 == 60) {           # <<HERE
-        if ($Ln =~ s/<<([_\w]+)//i) {
+	if ($C1 == 34) {			# "
+        # String scalar, quoted. Removes the quotes and unesacpes the strings (compile adds
+        # quotes).
+
+        #if (0) {
+            # BUG: the regex engine of perl 5.8.7 (Cygwin) unconditionally exits when it tried to
+            # match a large quoted string, e.g. >8000 characters.  perldb provides no hint
+            # why. This problem once occurred during intensive testing of this package.
+
+            #if (length($Ln) > 1000) {
+                #print STDERR "string len=".length($Ln)." val = \n\n$Ln\n\n" if $DEBUG;
+
+                # TODO: take a precautionary approach because of bug/misbehaviors in Perl's regex
+                # engine now (see above). 
+            #}
+        #}
+
+#         if ($Ln =~ s/$RELexQuotedSymbol//o) { # no escape sequences
+#             push @VStk, $1;
+#             return 'v';
+#         }
+
+		if ($Ln =~ s/$RELexQuotedString//o) { # maybe has escape sequences
+            push @VStk, unescape($1);
+			return 'v';
+        } else {
+			# There was no closing '"' found on this line. To recover from this error (which is
+			# hard) we simply continue to fetch lines until EOF, or $RELexQuotedString happens to
+			# match.  Then we return '??' instead of 'v'.
+
+			my $Lnprev;
+			syntax_error("unterminated quoted string '$Ln'");
+			while (1) {
+				$Lnprev = $Ln;
+				unless (lexln()) {
+					syntax_error("EOF in quoted string"); last;
+				}
+				$Ln = $Lnprev.$Ln;
+				last if $Ln =~ s/$RELexQuotedString//o;
+			} return '??';
+		}
+    } elsif ($C1 == 60) {		# <<HERE
+        if ($Ln =~ s/<<([_\w]+)//io) {
             # Fetch lines until $tok appears at top of a line.  Then continues at $rest of original
             # line. If not EOF the next call to lexln() will return the next line after the line
-            # that closed the here-doc.
+            # that had closed the here-doc.
 
             my($tok, $rest, @ln, $ok) = ($1, $Ln);
+            my $nanoscript = ($tok eq $DefaultNanoscriptToken);
             while ($ok = lexln()) {
                 if ($Ln =~ /^$tok\s*$/m) {
                     $Ln = $rest; last;
@@ -2243,60 +2280,48 @@ sub lex()
             }
             unless ($ok) {
                 confess unless at_eof();
-                $Readstruct->{lerr} = q(EOF while reading here-document '$tok');
-                return '??';
+				return syntax_error(qq(EOF while reading here-document '$tok'));
             } else {
                 push @VStk, join("\n", @ln)."\n"; # add newline to all lines
-                return 'v';
+                return $nanoscript ? 'n' : 'v';
             }
         }
-    } elsif ($C1 == 34) {       # "
-        # String scalar, quoted. Removes the quotes and unesacpes the strings (compile adds
-        # quotes).
-
-        if (1) {
-            # BUG: the regex engine of perl 5.8.7 (Cygwin) unconditionally exits when it tried to
-            # match a large quoted string, e.g. >8000 characters.  perldb provides no hint
-            # why. This problem once occurred during intensive testing of this package.
-
-            if (length($Ln) > 1000) {
-                #print "string len=".length($Ln)." val = \n\n$Ln\n\n" if $DEBUG;
-
-                # TODO: take a precautionary approach because of bug/misbehaviors in Perl's regex
-                # engine now (see above). 
-            }
-        }
-
-        if ($Ln =~ s/$g_re_lex_quoted_name//o) { # no escape sequences
-            push @VStk, $1;
-            #print "\nread name : '$1'";
-            return 'v';
-        } elsif ($Ln =~ s/$g_re_lex_quoted_string//o) { # maybe has escape sequences
-            push @VStk, unescape($1);
-            #print "\nread string: '", unescape($1), "'";
-            return 'v';
-        }
-    } elsif ($Ln =~ s/$g_re_lex_punct//o) {
-        # Punctuator.
-        #
-        # TODO: return chr($C1). Test wether comparing the ASCII for each punctuator isn't faster.
-
-        return $1;
-    } elsif ($Ln =~ s/$g_re_lex_name//o) {
-        # Symbolic name (unquoted string). Names are printable and hence have no \NNN sequences.
-        push @VStk, $1;
-        return 'v';
     }
 
-    # Unrecognized character, e.g. '*'.
+    # Jump over comments. '//' or '#' single-line-comment, '/*' multi-line-comment.
 
-    $Readstruct->{lerr} = "cannot read '$Ln'";
-    return '??';
+    if ($C1 == 35) {            # '#'
+        $Ln = ''; goto NEXTC1;
+    } elsif ($C1 == 47) {       # '/'
+        if ($Ln =~ /^\/[\*\/]/o) {
+            goto NEXTC1 if $Ln =~ s/^\/\*.*\*\/\s*//x;
+            if ($Ln =~ /^\/\//o) {
+                $Ln = ''; goto NEXTC1;
+            }
+            while (lexln()) {
+                if ($Ln =~ /\*\/(.*)/) {
+                    $Ln = $1; goto NEXTC1;
+                }
+            } return syntax_error(qq(unterminated comment));
+        }
+    }
+
+	# Must be a symbolic name (unquoted string). Names are printable and hence have no \NNN
+	# sequences.  (Finally applies a regex.)
+
+    if ($Ln =~ s/$RELexSymbol//o) {
+        push @VStk, $1;
+        return 'v';
+	}
+
+    # Unrecognized character, e.g. '*', single '<', '\''.
+
+	die "\n".syntax_error(qq(unrecognized character-code $C1).' '.chr($C1));
 }
 
 sub at_eof() {
     if ($ReadFh) {
-        return CORE::eof($ReadFh);
+        return eof($ReadFh);
     } elsif (defined $LnArray && $#$LnArray != -1) {
         return 0
     } else {
@@ -2305,101 +2330,86 @@ sub at_eof() {
 }
 
 sub lexln() {
-    if (at_eof()) {
-        # No file to read from, or at EOF.
-        $Ln = undef; return 0;
-    } else {
-        # Not at EOF yet.
-        if ($ReadFh) {
-            $Ln = readline($ReadFh);
-            $Ln =~ s/\r*\n\z//o; # One should really localize $/ in parse() and then chomp $Ln
-                                 # here. But I'm worried about the correct value for $/ to really
-                                 # make s/\r*\n\z// happen.  Note: don't strip \s* (before \r)
-                                 # because this would also affect here-doc-lines; of course it is
-                                 # questionable whether they should be allowed to end in horizontal
-                                 # whitespace.
-            $Ln =~ s/^\s*\#\#/\#/ if $SafeCppMode; # Convert '^##' back to '#'.
-        } else {
-            $Ln = shift @$LnArray; # from string
-        }
-        #study $Ln;
-        return 1;
+	# Called from lex() to parse Rlist files, and from read_csv().
+
+	if ($ReadFh && !eof($ReadFh)) {	# eof(undef) and eof(0) are 1
+		$Ln = readline($ReadFh); chomp $Ln;	# strips $/
+		$Ln =~ s/^([ \t]*)\\#/$1#/o if $SafeCppMode;
+		#print "$Ln\n";
+		return 1;
+    } elsif (defined $LnArray && $#$LnArray != -1) {
+		# Read from string.
+		$Ln = shift @$LnArray;
+		return 1;
     }
+	$Ln = undef;
+	return 0;
 }
 
 sub parse()
 {
-    my($q) = ('');
-    my($t, $m, $rule, $l);
-
-    $Errors = $MissingInput = 0;
-    @VStk = ();
-
-    #print "\nData::Rlist::parse()" if $DEBUG;
+    my($q, $t, $m, $r, $l) = ('');
+    $Warnings = $Errors = $MissingInput = $Broken = 0;
+    @Messages = @VStk = @NStk = ();
 
     while (defined($t = lex())) {
-        # Push the new input token to token queue $q.  Then reduce as many rules as possible from
-        # $q.  The "do" loop runs while a rule was matched. Otherwise it exits and then another
-        # token is read from the input string or file.
+        # Push new token to the queue, then reduce as many rules as possible from the tail of the
+        # queue. First tries to match long rules. After reducing the queue as far as possible fetch
+        # more tokens towards EOF.
+		#
+		# Note that the constants 2 and 4 are the min./max. lengths of rules in %Rules. When $l
+		# (the current length of $m) is <2 no rule can be matched.
 
-        $q .= $t;
-        do {
-            # At tail of $q, try to match rule $m. $m has a length of <= 4, since 4 is the length
-            # of the longest rule in the global parser syntax map %Rules.  Then the "while" loop
-            # tries to match $m, or less than $m.
+		#if (!$DEBUG) {
+		if (1) {
+			$q .= $t;
+			while (($l = length($q)) >= 2) {
+				if ($r = $Rules{substr($q, -4)}) {
+					substr($q, -4) = $r->();
+				} elsif ($r = $Rules{substr($q, -3)}) {
+					substr($q, -3) = $r->();
+				} elsif ($r = $Rules{substr($q, -2)}) {
+					substr($q, -2) = $r->();
+				} else { last }	  # fetch another token
+			}					  # match another rule
+		} else {
+			# The above loop is ca. 10% faster than the second, so this one is disabled (however,
+			# it is working).  The if(1/0) blocks are expected to be neutralized by the
+			# byte-compiler.
 
-            #print "\n\ttokens = $q " if $DEBUG;
-            $l = length $q;
-            if ($l > 4) {
-                $l = 4;
-                $m = substr($q, -4);
-            } else {
-                $m = $q;
-            }
+			$l = length($q .= $t);
+			while ($l >= 2) {
+				$l = 4 if $l > 4;
+				$m = substr($q, -$l);
 
-            while (1) {
-                if (exists $Rules{$m}) {
-                    # Found a rule to reduce. Note that using "exists" is faster than
-                    #       if (defined($rule = $Rules{$m})
-                    # because oftenly a rule $m won't exist.
+				while (1) {
+					# TODO: last if $m begins with [=,;})]
+					if ($Rules{$m}) {
+						# Can reduce a rule $m.
+						printf STDERR "%20s\treducing  $m\n", $q if $DEBUG;
+						substr($q, -$l) = $Rules{$m}->();
+						$l = length $q; last;
+					} else {
+						# $m is not a matching rule.  Cut the first character from $m and try
+						# matching it.
+						#
+						# Quickly removing the first character from a string is surprisingly
+						# hard. All of the following work:
+						#
+						#   $m = unpack('x1A'.$l, $m)
+						#   $m = substr($m, 1)		# fastest
+						#   substr($m, 0, 1) = ''
 
-                    $rule = $Rules{$m};
-                    #print qq'\treduced $m => $rule->[0]' if $DEBUG;
-                    substr($q, -$l) = $rule->[0];
-                    $rule->[1]->(); # apply the rule
-                    last;
-                } else {
-                    # So $m is not a matching rule.
-                    #
-                    # $l is the current length of $m. If $l<2 no rule can be matched, because 2 is
-                    # $rule_min, the length of the smallest rule, and has not matched.  Then we'll
-                    # leave the loop and fetch another token or EOF.
-
-                    #print qq' cannot reduce $m' if $DEBUG;
-                    last if --$l < 2;
-
-                    # When $l>=2 remove the first character from $m to try the next rule.
-                    #
-                    # Removing the first character *quickly* from a string is surprisingly hard. All
-                    # of the following work:
-                    #
-                    #   $m = unpack('x1A'.$l, $m)
-                    #   $m = substr($m, 1)          # 1
-                    #   substr($m, 0, 1) = ''       # 2
-                    #
-                    # unpack is the slowest, the first substr yet the fastest.  I also tried unpack
-                    # with constants 'x1A1', 'x1A2' and 'x1A3' (ca. 10% slower). Then (it was
-                    # late...) I had the idea to load the read-only variable $' implicitly using
-                    # m//, then in the loop do $'=~m/^./o to remove the first char from $' (but
-                    # still ca. 12% slower than the substr).
-
-                    $m = substr($m, 1);
-                }
-            }
-            last if $Errors;    # stop if an error occured
-        } while ($l > 1);       # ergo while $m had matched
+						printf STDERR "%20s\tno rule   $m\n", $q if $DEBUG && $l > 1;
+						last if --$l < 2;
+						$m = substr($m, 1);
+					}
+				} last if $Errors; # stop if an error occured
+			}
+		}
     }
 
+	# Parser finished.
     if ($Errors) {
         return undef;
     } else {
@@ -2408,20 +2418,20 @@ sub parse()
         # (list). Because of the parser map nature it could also be 'v' (value), in which case it
         # shall decay into a hash or list.
 
-        print qq'\nData::Rlist::parse() reached EOF with "$q"' if $DEBUG;
+        print STDERR qq'Data::Rlist::parse() reached EOF with "$q"\n' if $DEBUG;
 
         if (@VStk == 0) {
             # Empty input or non-existing file.
-            croak "unexpected, supernumeray tokens after parsing:\n\t$q" if $DEBUG && $q;
+            croak STDERR "unexpected, supernumeray tokens after parsing:\n\t$q\n" if $DEBUG && $q;
             $MissingInput = 1; return undef;
         } else {
             if (@VStk > 1) {
                 pr1nt('ERROR', qq'broken input', qq'expected "l" (list) or "h" (hash), not "$q"');
                 my @overproduced = map { ref($_) ? $_ : Data::Rlist::quote($_) } @VStk;
                 for (my $i = 0; $i <= $#overproduced; ++$i) {
-                    pr1nt('WARNING', sprintf("cancelling overbilled value [%u] %s", $i, $overproduced[$i]));
+                    warning(sprintf("cancelling overbilled value [%u] %s", $i, $overproduced[$i]));
                 }
-                print qq'\nData::Rlist::parse() returns undef' if $DEBUG;
+                print STDERR qq'Data::Rlist::parse() returns undef\n' if $DEBUG;
                 return undef;
             } elsif (not defined $VStk[0]) {
                 confess         # dto.
@@ -2435,21 +2445,18 @@ sub parse()
             }
         }
 
-        print qq'\nData::Rlist::parse() returns '.quote($VStk[0]) if $DEBUG;
+        print STDERR "Data::Rlist::parse() returns $VStk[0]\n" if $DEBUG;
         return pop @VStk;
     }
 }
 
-=head3 F<compile()>, F<compile_fast()> and F<compile_Perl()>
+=head3 F<compile(DATA[, OPTIONS, FH])>
 
-=over
-
-=item F<compile(DATA[, OPTIONS, FH])>
-
-Build Rlist text from any Perl data DATA.  When FH is defined compile directly to this file and
-return 1.  Otherwise (FH is F<undef>) build a string and return a reference to it.
-
-B<HOW DATA IS COMPILED>
+Build Rlist  text from any Perl data  DATA.  When FH is  defined compile directly to  this file and
+return 1.   Otherwise (FH is F<undef>) build  a string and return  a reference to it.   This is the
+compilation   function    called   when   the    OPTIONS   argument   passed    to   F<L</write>()>
+orF<L</write_string>()> is  not omitted, and  is not C<"fast">  or C<"perl">.  DATA is  compiled as
+follows:
 
 =over
 
@@ -2466,7 +2473,7 @@ OPTIONS.
 =item *
 
 Reference-types F<GLOB> (L<typeglob-refs|/Background: A Short Story of Typeglobs>), F<IO> and
-F<FORMAT> (file- and directory handles) cannot be dissolved.  These are compiled into the strings
+F<FORMAT> (file- and directory handles) cannot be dissolved, and are compiled into the strings
 C<"?GLOB?">, C<"?IO?"> and C<"?FORMAT?">.
 
 =item *
@@ -2475,18 +2482,18 @@ F<undef>'d values in arrays are compiled into the default Rlist C<"">.
 
 =back
 
-=item F<compile_fast(DATA)>
+=head3 F<compile_fast(DATA)>
 
-Build Rlist text from any Perl data DATA.  Do this as fast as actually possible with pure Perl.
-
-B<HOW DATA IS COMPILED>
+Build Rlist  text from any Perl data  DATA.  Do this as  fast as actually possible  with pure Perl.
+Note that this is the default compilation function called when OPTIONS are omitted, or C<"fast"> is
+passed (see F<L</write>()> and F<L</write_string>()>). DATA is compiled as follows:
 
 =over
 
 =item *
 
 Reference-types F<SCALAR>, F<HASH>, F<ARRAY> and F<REF> are compiled into text, whether blessed or
-not.  
+not.
 
 =item *
 
@@ -2499,23 +2506,18 @@ F<undef>'d values in arrays are compiled into the default Rlist C<"">.
 
 =back
 
-The main difference to F<L</compile>()> is that F<compile_fast()> considers no compile
-options. Thus it cannot call code, implicitly round numbers, and cannot detect recursively-defined
-data.
+The  main   difference  to  F<L</compile>()>   is  that  F<compile_fast()>  considers   no  compile
+options. Thus it cannot call code,  implicitly round numbers, and cannot detect recursively-defined
+data.  Also F<compile_fast()> returns a reference to the compiled string, which is a reference to a
+unique package variable.  Subsequent calls to F<compile_fast()> reassign this variable.  Because of
+this behaviors, F<compile_fast()> is very... fast!
 
-F<compile_fast()> returns a reference to the compiled string, which is a reference to a unique
-package variable. Subsequent calls to F<compile_fast()> therefore reassign this variable.
+=head3 F<compile_Perl(DATA)>
 
-=item F<compile_Perl(DATA)>
-
-Like F<L<compile_fast>()>, but do not compile Rlist text - compile DATA into Perl. It can then be
-F<eval>'d.  This renders more compact, and more exact output as L<Data::Dumper>. For example, only
-strings are quoted.
-
-Use the compile-option C<"perl"> to trigger this function from F<L</write>()> and
-F<L<write_string>()>.
-
-=back
+Like F<L</compile_fast>()>, but do  not compile Rlist text - compile DATA  into Perl syntax. It can
+then  be F<eval>'d.   This renders  more compact,  and more  exact output  as  L<Data::Dumper>. For
+example, only strings are  quoted.  To enable this compilation function you  must pass C<"perl"> to
+F<L</write>()> and F<L</write_string>()>, as the OPTIONS argument.
 
 =cut
 
@@ -2540,6 +2542,8 @@ sub compile($;$$)
           qw/outline_data outline_hashes
              code_refs here_docs auto_quote precision/;
 
+	$Eol_space = $/ unless defined $Eol_space;
+
     return compile1($data) unless $Fh; # return string-reference
     return compile2($data);     # return 1
 }
@@ -2557,13 +2561,13 @@ sub compval($) {
     #
     my $v = shift;
     if (defined $v) {
-        if ($v !~ $g_re_value) {
+        if ($v !~ $REValue) {
             # Not an identifier, number or quoted string.  Hence $v will be quoted, and maybe as
             # here-doc.
             if ($Here_docs) {
                 if ($v =~ /\n.*\n\z/os) {
                     # Here-docs enabled and $v qualifies.  Note that we want to write only strings
-                    # with at least two LFs as here-docs, although a final LF would be sufficient.
+                    # with at least two LFs as here-docs (although a final LF would be sufficient).
                     # Now find a token that doesn't interfere with the text: try "___", "HERE",
                     # "HERE0", "HERE1" etc.
 
@@ -2586,14 +2590,14 @@ sub compval($) {
         } elsif (ord($v) != 34) {
             # Not already quoted.  Either $v is a number or a symbolic name.
             if ($Auto_quote) {
-                if ($v =~ $g_re_float) {
+                if ($v =~ $REFloat) {
                     $v = round($v, $Precision) if defined $Precision;
                 } else {
-                    die $v unless $v =~ $g_re_symbol;
+                    die $v unless $v =~ $RESymbol;
                     $v = qq("$v");
                 }
             } elsif (defined $Precision) {
-                $v = round($v, $Precision) if $v =~ $g_re_float;
+                $v = round($v, $Precision) if $v =~ $REFloat;
             }
         }
     } $v
@@ -2612,7 +2616,7 @@ sub compile1($)
         $Depth++;
         if ($MaxDepth >= 1 && $MaxDepth < $Depth) {
             pr1nt('ERROR', "compile1() broken in deep $data (max-depth = $MaxDepth)") unless $Broken++;
-            $r = DEFAULT
+            $r = DEFAULT_VALUE
         } elsif ($Datatype == 65) { # 65 => 'A' => 'ARRAY'
             my $cnt = @$data;
             unless ($cnt) {
@@ -2662,7 +2666,7 @@ sub compile1($)
                         $r.= '{'.$Paren_space;
                         $r.= $Eol_space if $manykeys; $inl = 1;
                     }
-                    $k = $pref.(($k !~ $g_re_value) ? quote($k) : $k);
+                    $k = $pref.(($k !~ $REValue) ? quote($k) : $k);
                     unless (defined($v)) {
                         $r.= $k.$Semicolon_punct.$Eol_space; # value is undef
                     } else {
@@ -2687,7 +2691,7 @@ sub compile1($)
     } elsif (defined $data) {   # $data is some scalar (not a ref)
         $r = compval($data);
     } else {                    # $data is undefined
-        $r = DEFAULT
+        $r = DEFAULT_VALUE
     } \$r;
 }
 
@@ -2707,7 +2711,7 @@ sub compile2($)
         $Depth++;
         if ($MaxDepth >= 1 && $MaxDepth < $Depth) {
             pr1nt('ERROR', "compile2() broken in deep $data (depth = $Depth, max-depth = $MaxDepth)") unless $Broken++;
-            print $Fh "\n", DEFAULT;
+            print $Fh "\n", DEFAULT_VALUE;
         } elsif ($Datatype == 65) { # 65 => 'A' => 'ARRAY'
             my $cnt = 1 + $#$data;
             unless ($cnt) {
@@ -2748,7 +2752,7 @@ sub compile2($)
                         print $Fh '{'.$Paren_space;
                         print $Fh $Eol_space if $manykeys; $inl = 1;
                     }
-                    $k = $pref.(($k !~ $g_re_value) ? quote($k) : $k);
+                    $k = $pref.(($k !~ $REValue) ? quote($k) : $k);
                     unless (defined($v)) {
                         print $Fh $k.$Semicolon_punct.$Eol_space; # value is undef
                     } else {
@@ -2778,7 +2782,7 @@ sub compile2($)
     } elsif (defined $data) {   # $data is some scalar (not a ref)
         print $Fh compval($data);
     } else {                    # $data is undefined
-        print $Fh DEFAULT;
+        print $Fh DEFAULT_VALUE;
     } 1
 }
 
@@ -2817,9 +2821,9 @@ sub compile_fast1($)
                         if (ref) {
                             compile_fast1($_)
                         } else {
-                            $R.= $_ !~ $g_re_value ? quote($_): $_
+                            $R.= $_ !~ $REValue ? quote($_): $_
                         }
-                    } else { $R.= DEFAULT }
+                    } else { $R.= DEFAULT_VALUE }
                 } $R.= ')';
             } else { $R .= '()' }
         } elsif ($Datatype == 72) {   # 72 => 'H' => 'HASH'
@@ -2834,14 +2838,14 @@ sub compile_fast1($)
                 $R.= "{\n";
                 foreach $K (sort keys %$data) {
                     $V = $data->{$K};
-                    $K = quote($K) if $K !~ $g_re_value;
+                    $K = quote($K) if $K !~ $REValue;
                     $R.= $pref.chr(9).$K;
                     if (defined $V) {
                         $R.= ' = ';
                         if (ref $V) {
                             compile_fast1($V);
                         } else {
-                            $V = quote($V) if $V !~ $g_re_value;
+                            $V = quote($V) if $V !~ $REValue;
                             $R.= $V;
                         }
                     } $R.= ";\n";
@@ -2852,15 +2856,15 @@ sub compile_fast1($)
         } elsif ($Datatype == 82) { # 82 => 'R' => 'REF'
             compile_fast1($$data)
         } elsif ($Datatype == 83) { # 83 => 'S' => 'SCALAR'
-            $R.= ($$data !~ $g_re_value) ? quote($$data) : $$data;
+            $R.= ($$data !~ $REValue) ? quote($$data) : $$data;
         } else {                # other reference: 'CODE', 'IO', 'GLOB' or 'FORMAT'
             $R.= '"?'.reftype($data).'?"'
         }
         $Depth--;
     } elsif (defined $data) {   # number or string
-        $R.= ($data !~ $g_re_value) ? quote($data) : $data;
+        $R.= ($data !~ $REValue) ? quote($data) : $data;
     } else {                    # undef
-        $R.= DEFAULT;
+        $R.= DEFAULT_VALUE;
     }
 }
 
@@ -2897,7 +2901,7 @@ sub compile_Perl1($)
                         } else {
                             $R.= is_number($_) ? $_ : __quote($_)
                         }
-                    } else { $R.= DEFAULT }
+                    } else { $R.= DEFAULT_VALUE }
                 } $R.= ']';
             } else { $R .= '[]' }
         } elsif ($Datatype == 72) {
@@ -2932,46 +2936,42 @@ sub compile_Perl1($)
     } elsif (defined $data) {   # number or string
         $R.= is_number($data) ? $data : __quote($data);
     } else {                    # undef
-        $R.= DEFAULT;
+        $R.= DEFAULT_VALUE;
     }
 }
 
 =head2 Auxiliary Functions
 
-The utility functions in this section are generally useful when handling stringified data.  These
-functions are either very fast, or smart, or both.  For example, F<L</quote>()>, F<L</unquote>()>,
-F<L</escape>()> and F<L</unescape>()> internally use precompiled regexes and precomputed ASCII
-tables; so employing these functions is probably faster then using own variants.
+The utility functions  in this section are generally useful when  handling stringified data.  These
+functions are either very fast, or  smart, or both.  For example, F<L</quote>()>, F<L</unquote>()>,
+F<L</escape>()>  and F<L</unescape>()>  internally use  precompiled regexes  and  precomputed ASCII
+tables.  For this employing these functions should be faster then using own variants.
 
-=head3 F<is_number()>, F<is_symbol()> and F<is_random_text()>
+=head3 F<is_integer(SCALAR-REF)>
 
-=over
+Returns  true when  a scalar  looks like  a positive  or negative  integer constant.   The function
+applies the compiled regex F<$Data::Rlist::REInteger>.
 
-=item F<is_integer(SCALAR-REF)>
+=head3 F<is_number(SCALAR-REF)>
 
-Returns true when a scalar looks like an +/- integer constant.  The function applies the compiled
-regex F<$Data::Rlist::g_re_integer>.
-
-=item F<is_number(SCALAR-REF)>
-
-Test for strings that look like numbers. F<is_number()> can be used to test whether a scalar looks
-like a integer/float constant (numeric literal). The function applies the compiled regex
-F<$Data::Rlist::g_re_float>.  Note that it doesn't match
-
-- the IEEE 754 notations of Infinite and NaN,
+Test for strings that look like numbers. F<is_number()>  can be used to test whether a scalar looks
+like  a  integer/float  constant  (numeric  literal).   The function  applies  the  compiled  regex
+F<$Data::Rlist::REFloat>.  Note that it doesn't match
 
 - leading or trailing whitespace,
 
 - lexical conventions such as the C<"0b"> (binary), C<"0"> (octal), C<"0x"> (hex) prefix to denote a
   number-base other than decimal, and
 
-- Perls' legible numbers, e.g. F<3.14_15_92>.
+- Perls' legible numbers, e.g. F<3.14_15_92>,
+
+- the IEEE 754 notations of Infinite and NaN.
 
 See also
 
-    perldoc -q "whether a scalar is a number"
+    $ perldoc -q "whether a scalar is a number"
 
-=item F<is_symbol(SCALAR-REF)>
+=head3 F<is_symbol(SCALAR-REF)>
 
 Test for symbolic names.  F<is_symbol()> can be used to test whether a scalar looks like a symbolic
 name.  Such strings need not to be quoted.  Rlist defines symbolic names as a superset of C
@@ -2983,87 +2983,75 @@ identifier names:
     [a-zA-Z_][a-zA-Z_0-9]*                  # match C/C++ identifier
     [a-zA-Z_\-/\~:@][a-zA-Z_0-9\-/\~:\.@]*  # match Rlist symbolic name
 
-For example, scoped/structured names such as F<std::foo>, F<msg.warnings>, F<--verbose>,
-F<calculation-info> need not be quoted. (But if they're quoted their value is exactly the same.)
-Note that F<is_symbol()> does not catch leading or trailing whitespace. Another restriction is that
-C<"."> cannot be used as first character, since it could also begin a number.
+For  example,   scoped/structured  names   such  as  F<std::foo>,   F<msg.warnings>,  F<--verbose>,
+F<calculation-info>  need not  be  quoted.  Note  that  F<is_symbol()> does  not  catch leading  or
+trailing whitespace. Another restriction is that C<"."> cannot be used as first character, since it
+could also begin a number.
 
-=item F<is_value(SCALAR-REF)>
+=head3 F<is_value(SCALAR-REF)>
 
 Returns true when the scalar is an integer, a number, a symbolic name or some string returned by
 F<L</quote>()>.
 
-=item F<is_random_text(SCALAR-REF)>
+=head3 F<is_random_text(SCALAR-REF)>
 
-The opposite of F<L<is_value>()>.  On such text F<L</compile>()> amd F<L</compile_fast>()>
+The opposite of F<L</is_value>()>.  On  such texts F<L</compile>()> amd F<L</compile_fast>()> would
 call F<L</quote>()>.
-
-=back
 
 =cut
 
-sub is_integer(\$) { ${$_[0]} =~ $g_re_integer ? 1 : 0 }
-sub is_number(\$) { ${$_[0]} =~ $g_re_float ? 1 : 0 }
-sub is_symbol(\$) { ${$_[0]} =~ $g_re_symbol ? 1 : 0 }
-sub is_value(\$) { ${$_[0]} =~ $g_re_value ? 1 : 0 }
-sub is_random_text(\$) { ${$_[0]} =~ $g_re_value ? 0 : 1 }
+sub is_integer(\$) { ${$_[0]} =~ $REInteger ? 1 : 0 }
+sub is_number(\$) { ${$_[0]} =~ $REFloat ? 1 : 0 }
+sub is_symbol(\$) { ${$_[0]} =~ $RESymbol ? 1 : 0 }
+sub is_value(\$) { ${$_[0]} =~ $REValue ? 1 : 0 }
+sub is_random_text(\$) { ${$_[0]} =~ $REValue ? 0 : 1 }
 
-=head3 F<quote()>, F<escape()> and F<unhere()>
-
-=over
-
-=item F<quote(TEXT)>
-
-=item F<escape(TEXT)>
+=head3 F<quote(TEXT)>, F<escape(TEXT)>
 
 Converts TEXT into 7-bit-ASCII.  All characters not in the set of the 95 printable ASCII characters
-are escaped (see below).  The following ASCII codes will be converted to escaped octal numbers,
+are escaped  (see below).  The following  ASCII codes will  be converted to escaped  octal numbers,
 i.e. 3 digits prefixed by a slash:
 
     0x00 to 0x1F
     0x80 to 0xFF
     " ' \
 
-The difference between the two functions is that F<quote()> additionally places TEXT into
-double-quotes.  For example, F<quote(qq'"FrE<uuml>her Mittag\n"')> returns C<"\"Fr\374her
+The  difference  between  the two  functions  is  that  F<quote()>  additionally places  TEXT  into
+double-quotes.    For  example,   F<quote(qq'"FrE<uuml>her   Mittag\n"')>  returns   C<"\"Fr\374her
 Mittag\n\"">, while F<escape()> returns C<\"Fr\374her Mittag\n\">
 
-=item F<maybe_quote(TEXT)>
+=head3 F<maybe_quote(TEXT)>
 
 Return F<quote(TEXT)> if F<L</is_random_text>(TEXT)>; otherwise (TEXT defines a symbolic name or
 number) return TEXT.
 
-=item F<maybe_unquote(TEXT)>
+=head3 F<maybe_unquote(TEXT)>
 
 Return F<unquote(TEXT)> when the first character of TEXT is C<">; otherwise returns TEXT.
 
-=item F<unquote(TEXT)>
-
-=item F<unescape(TEXT)>
+=head3 F<unquote(TEXT)>, F<unescape(TEXT)>
 
 Reverses F<L</quote>()> and F<L</escape>()>.
 
-=item F<unhere(HERE-DOC-STRING[, COLUMNS, FIRSTTAB, DEFAULTTAB])>
+=head3 F<unhere(HERE-DOC-STRING[, COLUMNS, FIRSTTAB, DEFAULTTAB])>
 
-HERE-DOC-STRING shall be a L<here-document|/Here-Documents>. The function checks whether each line
-begins with a common prefix, and if so, strips that off.  If no prefix it takes the amount of
+HERE-DOC-STRING shall be a L<here-document|/Here-Documents>.  The function checks whether each line
+begins with  a common prefix,  and if so,  strips that off.   If no prefix  it takes the  amount of
 leading whitespace found the first line and removes that much off each subsequent line.
 
-Unless COLUMNS is defined returns the new here-doc-string. Otherwise, takes the string and
-reformats it into a paragraph having no line more than COLUMNS characters long. FIRSTTAB will be
-the indent for the first line, DEFAULTTAB the indent for every subsequent line. Unless passed,
+Unless  COLUMNS  is defined  returns  the  new here-doc-string.  Otherwise,  takes  the string  and
+reformats it into  a paragraph having no line  more than COLUMNS characters long.  FIRSTTAB will be
+the indent  for the first  line, DEFAULTTAB  the indent for  every subsequent line.  Unless passed,
 FIRSTTAB and DEFAULTTAB default to the empty string C<"">.
 
 This function combines recipes 1.11 and 1.12 from the Perl Cookbook.
-
-=back
 
 =cut
 
 our(%g_nonprintables_escaped,   # keys are non-printable ASCII chars, values are escape sequences
     %g_escaped_nonprintables,   # keys are escaped sequences, values are the non-printables
-    $g_re_nonprintable,
-    $g_re_escape_seq);
+    $REnonprintable,
+    $REescape_seq);
 
 BEGIN {
     # Perl should not use/require the same module twice. However, the die exception below may fire
@@ -3087,7 +3075,7 @@ BEGIN {
     #
     # which has now been optimized into
     #
-    #   s/$g_re_nonprintable/$g_nonprintables_escaped{$1}/go
+    #   s/$REnonprintable/$g_nonprintables_escaped{$1}/go
     #
 
     sub escape_char($) {
@@ -3099,8 +3087,8 @@ BEGIN {
         pack('C', oct($_[0]));  # deoctalize eg. 11 => 9 => \t
     }
 
-    $g_re_escape_seq = qr/\\([0-7]{1,3}|[nrt"'\\])/;
-    $g_re_nonprintable = qr/([\x00-\x1F\x80-\xFF"'])/;
+    $REescape_seq = qr/\\([0-7]{1,3}|[nrt"'\\])/;
+    $REnonprintable = qr/([\x00-\x1F\x80-\xFF"'])/;
 
     # Build tables for non-printable ASCII chararacters.
 
@@ -3117,7 +3105,7 @@ BEGIN {
     #croak sort keys %g_escaped_nonprintables;
 
     # Add \ " ' into the tables, which spares another s// call in escape and unescape for
-    # them. The leading \ is alredy matched by $g_re_escape_seq.
+    # them. The leading \ is alredy matched by $REescape_seq.
 
     $g_nonprintables_escaped{chr(34)} = qq(\\"); # " => \"
     $g_nonprintables_escaped{chr(39)} = qq(\\'); # ' => \'
@@ -3126,22 +3114,21 @@ BEGIN {
     $g_escaped_nonprintables{chr(39)} = chr(39);
     $g_escaped_nonprintables{chr(92)} = chr(92);
 
-	# Add \r, \n and \t.
+    # Add \r, \n and \t.
 
-	if (1) {
-		$g_nonprintables_escaped{chr( 9)} = qq(\\t); # \t => \\t
-		$g_nonprintables_escaped{chr(10)} = qq(\\n); # \n => \\n
-		$g_nonprintables_escaped{chr(13)} = qq(\\r); # \r => \\r
+    if (1) {
+        $g_nonprintables_escaped{chr( 9)} = qq(\\t); # \t => \\t
+        $g_nonprintables_escaped{chr(10)} = qq(\\n); # \n => \\n
+        $g_nonprintables_escaped{chr(13)} = qq(\\r); # \r => \\r
 
-		$g_escaped_nonprintables{'t'} = chr( 9);
-		$g_escaped_nonprintables{'n'} = chr(10);
-		$g_escaped_nonprintables{'r'} = chr(13);
-	}
+        $g_escaped_nonprintables{'t'} = chr( 9);
+        $g_escaped_nonprintables{'n'} = chr(10);
+        $g_escaped_nonprintables{'r'} = chr(13);
+    }
 }
 
 sub maybe_quote($) { is_random_text($_[0]) ? quote($_[0]) : $_[0] }
 sub maybe_unquote($) { ord($_[0]) == 34 ? unquote($_[0]) : $_[0] }
-
 sub quote($) {
     # Escape, then add quotes (the below expression is faster than qq).
     '"'.escape($_[0]).'"'
@@ -3156,14 +3143,14 @@ sub unquote($) {
 
 sub escape($) {
     my $s = shift; return '' unless defined $s;
-    $s =~ s/\\/\\\\/g;											 # has to happen first, because...
-    $s =~ s/$g_re_nonprintable/$g_nonprintables_escaped{$1}/gos; # ...will intersperse more backslashes
+    $s =~ s/\\/\\\\/g;										  # has to happen first, because...
+    $s =~ s/$REnonprintable/$g_nonprintables_escaped{$1}/gos; # ...will intersperse more backslashes
     $s
 }
 
 sub unescape($) {
     my $s = shift;
-    $s =~ s/$g_re_escape_seq/$g_escaped_nonprintables{$1}/gos;
+    $s =~ s/$REescape_seq/$g_escaped_nonprintables{$1}/gos;
     $s
 }
 
@@ -3189,27 +3176,19 @@ sub unhere($;$$$) {
     }
 }
 
-=head3 F<split_quoted()>
-
-=over
-
-=item F<split_quoted(INPUT[, DELIMITER])>
-
-=item F<parse_quoted(INPUT[, DELIMITER])>
+=head3 F<split_quoted(INPUT[, DELIMITER])> and F<parse_quoted(INPUT[, DELIMITER])>
 
 Divide the string INPUT into a list of strings.  DELIMITER is a regular expression specifying where
-to split (default: C<'\s+'>).  The function won't split at DELIMITERs inside quotes, or which are
+to split (default: C<'\s+'>).   The function won't split at DELIMITERs inside  quotes, or which are
 backslashed.  For example, to split INPUT at commas use C<'\s*,\s*'>.
 
-F<parse_quoted()> works like F<split_quoted()> but additionally removes all quotes and backslashes
-from the splitted fields.  Both functions effectively simplify the interface of
-F<Text::ParseWords>.  In an array context they return a list of substrings, otherwise the count of
-substrings. An empty array is returned in case of unbalanced C<"> quotes, e.g.
+F<parse_quoted()> works like F<split_quoted()> but  additionally removes all quotes and backslashes
+from   the   splitted   fields.    Both   functions   effectively   simplify   the   interface   of
+F<Text::ParseWords>.  In an array context they return  a list of substrings, otherwise the count of
+substrings.    An  empty   array   is  returned   in   case  of   unbalanced  double-quotes,   e.g.
 F<split_quoted(C<'foo,"bar'>)>.
 
 B<EXAMPLES>
-
-F<split_quoted()>:
 
     sub split_and_list($) {
         print ($i++, " '$_'\n") foreach split_quoted(shift)
@@ -3296,8 +3275,8 @@ Here is some more complete code to parse a F<.csv>-file with quoted fields, esca
     die q(unbalanced " in input) unless @lines;
     my @table = map { [ map { parse_quoted($_, '\s*,\s') } ] } @lines
 
-You may also use F<L</read_csv>()>.  A nice way to make sure what F<split_quoted()> and
-F<parse_quoted()> return is using F<L<deep_compare>()>.  For example, the following code shall
+In core this  is what F<L</read_csv>()> does.  A  nice way to make sure  what F<split_quoted()> and
+F<parse_quoted()> return  is using  F<L</deep_compare>()>.  For example,  the following  code shall
 never die:
 
     croak if deep_compare([split_quoted("fee fie foo")], ['fee', 'fie', 'foo']);
@@ -3305,8 +3284,6 @@ never die:
 
 The 2nd call to F<L</parse_quoted>()> happens in scalar context, hence shall return 1 because
 there's one string to parse.
-
-=back
 
 =cut
 
@@ -3318,46 +3295,42 @@ sub split_quoted($;$) {
     # uninitialized value..."  warnings.
 
     use Text::ParseWords;
-    return map { (defined) ? $_ : DEFAULT } parse_line($_[1]||'[\s]+', 1, $_[0])
+    return map { (defined) ? $_ : '' } parse_line($_[1]||'[\s]+', 1, $_[0])
 }
 
 sub parse_quoted($;$) {
     use Text::ParseWords;
-    return map { (defined) ? $_ : DEFAULT } parse_line($_[1]||'[\s]+', 0, $_[0])
+    return map { (defined) ? $_ : '' } parse_line($_[1]||'[\s]+', 0, $_[0])
 }
 
-=head3 F<equal()> and F<round()>
+=head3 F<equal(NUM1, NUM2[, PRECISION])> and F<round(NUM1[, PRECISION])>
 
-=over
+Compare   and   round   floating-point   numbers.    NUM1   and  NUM2   are   string-   or   number
+scalars. F<L</equal>()>  returns true if  NUM1 and  NUM2 are equal  to PRECISION number  of decimal
+places (default: 6).
 
-=item F<equal(NUM1, NUM2[, PRECISION])>
-
-=item F<round(NUM1[, PRECISION])>
-
-Compare and round floating-point numbers. F<L</equal>()> returns true if NUM1 and NUM2 are equal to
-PRECISION (default: 6) number of decimal places.  NUM1 and NUM2 are string- or number scalars.
-
-Normally F<round()> will return a number in fixed-point notation.  When the package-global
-F<$Data::Rlist::RoundScientific> is true F<round()> formats the number in either normal or
-exponential (scientific) notation, whichever is more appropriate for its magnitude.  This differs
-slightly from fixed-point notation in that insignificant zeroes to the right of the decimal point
-are not included. Also, the decimal point is not included on whole numbers.  For example,
+Normally  F<round()>  will  return a  number  in  fixed-point  notation.  When  the  package-global
+F<$Data::Rlist::RoundScientific> is true,  however, F<round()> formats the number  in either normal
+or  exponential (scientific)  notation,  whichever is  more  appropriate for  its magnitude.   This
+differs slightly from fixed-point notation in that insignificant zeroes to the right of the decimal
+point are  not included. Also, the  decimal point is not  included on whole  numbers.  For example,
 F<L</round>(42)> does not return 42.000000, and F<round(0.12)> returns 0.12, not 0.120000.
 
 B<MACHINE ACCURACY>
 
-One needs a function like F<L</equal>()> to compare floats, because IEEE 754 single- and double
-precision implementations are not absolute - in contrast to the numbers they actually represent.
-In all machines non-integer numbers are only an approximation to the numeric truth.  In other
-words, they're not commutative! For example, given two floats F<a> and F<b>, the result of F<a+b>
-might be different than that of F<b+a>.
+One  needs a  function like  F<equal()> to  compare  floats, because  IEEE 754  single- and  double
+precision implementations  are not absolute - in  contrast to the numbers  they actually represent.
+In all  machines non-integer  numbers are  only an approximation  to the  numeric truth.   In other
+words, they're not commutative.  For example, given  two floats F<a> and F<b>, the result of F<a+b>
+might be different than that of F<b+a>.  For another example, it is a mathematical truth that F<a *
+b = b * a>, but not necessarily in a computer.
 
 Each machine has its own accuracy, called the F<machine epsilon>, which is the difference between 1
 and the smallest exactly representable number greater than one. Most of the time only floats can be
-compared that have been carried out to a certain number of decimal places.  In general this is the
-case when two floats that result from a numeric operation are compared - but not two constants.
+compared that have been carried out to a  certain number of decimal places.  In general this is the
+case when  two floats that result  from a numeric operation  are compared - but  not two constants.
 (Constants are accurate through to lexical conventions of the language. The Perl and C syntaxes for
-numbers simply won't allow you to write down inaccurate numbers in code.)
+numbers simply won't allow you to write down inaccurate numbers.)
 
 See also recipes 2.2 and 2.3 in the Perl Cookbook.
 
@@ -3376,8 +3349,6 @@ B<EXAMPLES>
     round(-.00057260)       -0.000573
     round(-1.6804e-6)       -0.000002
 
-=back
-
 =cut
 
 sub equal($$;$) {
@@ -3394,19 +3365,15 @@ sub round($;$) {
     return sprintf("%.${prec}f", $a);
 }
 
-=head3 F<deep_compare()>
+=head3 F<deep_compare(A, B[, PRECISION, PRINT])>
 
-=over
-
-=item F<deep_compare(A, B[, PRECISION, PRINT])>
-
-Compare and analyze two numbers, strings or references. Generates a log (stack of messages)
-describing exactly all unequal data.  Hence, for any Perl data F<$a> and F<$b> one can assert:
+Compare and  analyze two numbers, strings or  references.  Generates a list  of messages describing
+exactly all unequal data.  Hence, for any Perl data F<$a> and F<$b> one can assert:
 
     croak "$a differs from $b" if deep_compare($a, $b);
 
-When PRECISION is defined all numbers in A and B are F<L</round>()>ed before actually comparing them.
-When PRINT is true traces progress on F<stdout>.
+When PRECISION  is defined all numbers  in A and  B are F<L</round>()>ed before  actually comparing
+them.  When PRINT is true traces progress on F<STDOUT>.
 
 B<RESULT>
 
@@ -3424,18 +3391,17 @@ yields
 
     <<undef>> cmp <<1>>   stop! 1st undefined, 2nd defined (1)
 
-Some more complex example.  Deep-comparing two multi-level data structures A and B returned two
+Some more  complex example.  Deep-comparing  two multi-level data  structures A and B  returned two
 messages:
 
     'String literal' == REF(0x7f224)   stop! type-mismatch (scalar versus REF)
     'Greetings, earthlings!' == CODE(0x7f2fc)   stop! type-mismatch (scalar versus CODE)
 
-Somewhere in A a string C<"String literal"> could not be compared, because the F<corresponding>
+Somewhere in  A a string  C<"String literal"> could  not be compared, because  the F<corresponding>
 element in B is a reference to a reference. Next it says that C<"Greetings, earthlings!"> could not
-be compared because the corresponding element in B is a code reference. (One could assert, however,
-that the actual opacity here is that F<they> speak ASCII.)
+be compared because the corresponding element in B is a code reference.
 
-Actually, A and B are identical. B was written to disk (by F<L</write>()>)and then read back as A
+Actually, A and B are identical. B was written  to disk (by F<L</write>()>) and then read back as A
 (by F<L</read>()>).  So, why don't they compare anymore?  Because in B the refs F<REF(0x7f224)> and
 F<CODE(0x7f2fc)> hide
 
@@ -3445,12 +3411,10 @@ and
 
     sub { 'Greetings, earthlings!' }
 
-When writing B to disk F<write()> has dissolved the scalar- and the code-reference into C<"String
+When writing B to  disk F<write()> has dissolved the scalar- and  the code-reference into C<"String
 literal"> and C<"Greetings, earthlings!">. Of course, F<deep_compare()> will not do that, so A does
-not compare to B anymore.  Note that despite these two mismatches, F<deep_compare()> had continued
-the comparision for all other elements in A and B.  Hence the structures are otherwise identical.
-
-=back
+not compare to B anymore.  Note  that despite these two mismatches, F<deep_compare()> had continued
+the comparison for all other elements in A and B.  Hence the structures are otherwise identical.
 
 =cut
 
@@ -3459,158 +3423,148 @@ sub deep_compare($$;$$$)
 {
     use Scalar::Util qw/reftype blessed looks_like_number/;
 
+    sub prind($@) { my $ind = shift||0; print STDERR chr(9) x $ind, join(' ', grep { defined } @_), chr(10) }
+	#sub quot($) { my $s = shift; $s =~ s/([\n\r\t])/\\&ord($1)/ge; "'$s'" }
+	sub quot($) { my $s = shift; defined($s) ? "'$s'" : 'undef' }
+
+    my(@R);
     my($a, $b, $prec, $dump, $ind) = @_;
-    my(@R, $r);
-    my $prind = sub(@) { foreach (@_) { print chr(9) x $ind, $_ } };
-    my $result = sub {
-        my $s = 'stop! '.shift();
-        $prind->($ind, "   $s") if $dump;
-        push @R, "$r   $s"
-    };
-    my $round = sub($) { defined($prec) ? round(shift(), $prec) : shift() };
-    my $arf = ref($a);          # ref returns undef on non-refs
-    my $brf = ref($b);
-    my $atp = reftype($a);
-    my $btp = reftype($b);
-    my $anm = (defined $arf) && looks_like_number($a);
-    my $bnm = (defined $brf) && looks_like_number($b);
-    my $fmt = sub(@) {          # format number and string for printing
-        map { s/\r/\\r/g; s/\t/\\t/g; $_ }
-        map {
-            (not defined) ? 'undef' :
-            (ref) ? $_ : looks_like_number($_) ? $round->($_) : qq"'$_'"
-        } @_
-    };
+    my($atp, $btp) = (reftype($a), reftype($b)); # undef, SCALAR, ARRAY or HASH
+    my($anm, $bnm, $refs) = (0, 0, defined($atp));
+	my $prefix = sub { quot($a).($anm ? ' == ' : ' cmp ').quot($b) };
+    my($mismatch, $match) = sub { # use "lazy instantiation", so that this sub isn't compiled for
+                                  # the majority of cases (when two values are equal)
+		my $s = shift; eval 'push @R, $prefix->()."\tStop! ".$s; prind($ind, $R[$#R]) if $dump;'
+	};
+    $match = sub { my $s = shift; eval 'prind($ind, $prefix->(), $s)' } if $dump;
+	$ind ||= 0;
 
-    $arf = ($anm ? 'number' : defined($a) ? 'string' : 'undef') unless $arf;
-    $brf = ($bnm ? 'number' : defined($b) ? 'string' : 'undef') unless $brf;
+    unless ($refs) {			# unless $a is a reference
+		unless (defined $a) {
+			$atp = 'undef';
+			if (defined $b) {
+				$mismatch->('only 2nd defined');
+			} else {
+				$match->() if $dump; # both undef'd
+			} return @R;
+		} else {
+			unless (defined $b) {
+				$mismatch->('only 1st defined');
+				return @R;
+			}
+			$atp = ($anm = is_number($a)) ? 'number' : 'string';
+			$a = round($a, $prec) if $anm and defined $prec;
+		}
+	}
+    unless (defined $btp) {
+		unless (defined $b) {
+			$btp = 'undef';
+			if (defined $a) {
+				$mismatch->('only 1st defined');
+			} else {
+				$match->() if $dump; # both undef'd
+			} return @R;
+		} else {
+			unless (defined $a) {
+				$mismatch->('only 2nd defined');
+				return @R;
+			}
+			$btp = ($bnm = is_number($b)) ? 'number' : 'string';
+			$b = round($b, $prec) if $bnm and defined $prec;
+		}
+	}
+	#die unless defined $a && defined $b;
+	if ($atp ne $btp) {
+		$mismatch->("type-mismatch, $atp vs. $btp");
+		return @R;
+	}
 
-    if (1) {
-        my @s = $fmt->($a, $b);
-        my @t = map { $_ ? " as $_" : "" } ($atp, $btp);
-        $r = "<<$s[0]>>$t[0] ".($anm ? '==' : 'cmp')." <<$s[1]>>$t[0]";
-        if ($dump) {
-            print chr(10); $prind->($r);
-        }
-    }
-
-    if (not defined $a and not defined $b) {
-        print "\tboth undef" if $dump;
-        return @R;
-    }
-
-    if ((defined $a) and (not defined $b)) {
-        $result->("1st defined, 2nd not ($a)");
-        return @R;
-    } elsif (not defined $a and defined $b) {
-        $result->("1st undefined, 2nd defined ($b)");
-        return @R;
-    }
-
-    unless ($arf eq $brf) {
-        $result->("type-mismatch ($arf versus $brf)");
-        return @R;
-    }
-    #$result->("reference-types do not match ($atp != $btp)") unless $atp eq $btp;
-
-    unless (defined $atp) {
+	# At this point $a and $b have equal types.
+    unless ($refs) {
+		# Compare numbers/strings.
         if ($anm) {
-            #($a, $b) = map { round($_, $prec) } ($a, $b) if defined $prec;
-            if (defined $prec) {
-                $a = round($a, $prec);
-                $b = round($b, $prec);
-                $prec = " (precision=$prec)";
-            } else {
-                $prec = " (precision=none)";
-            }
+			$prec = (defined $prec) ? " precision=$prec" : '';
             unless (equal($a, $b)) {
-                $result->("unequal numbers$prec")
+                $mismatch->($prec)
             } elsif ($dump) {
-                print "\tidentical numbers$prec"
+                $match->($prec)
             }
         } elsif ($a ne $b) {
-            $result->("unequal strings")
+            $mismatch->('unequal strings')
         } elsif ($dump) {
-            print "\tidentical strings"
-        }
-        return @R
-    } elsif ($atp eq 'SCALAR') {
-        push @R, deep_compare($$a, $$b, $prec, $dump, $ind + 1);
-        return @R
-    } elsif ($atp eq 'HASH') {
-        # Deep-compare two hashes.  First test number of key/value-pairs.
-        my $acnt = keys %$a;
-        my $bcnt = keys %$b;
-        unless ($acnt == $bcnt) {
-            $result->("different number of keys ($acnt, $bcnt)");
-            return @R;          # then don't test the keys
-        } return @R if $acnt == 0;
-
-        # Although both hashes have an equal number of keys, make sure that the keys themselves are
-        # equal.
-
-        my @a_keys_missing = grep { not exists $b->{$_} } keys %$a;
-        my @b_keys_missing = grep { not exists $a->{$_} } keys %$b;
-
-        if (@a_keys_missing || @b_keys_missing) {
-            $result->("1st hash misses keys (".join(', ', $fmt->(@a_keys_missing)).")") if @a_keys_missing;
-            $result->("2nd hash misses keys (".join(', ', $fmt->(@b_keys_missing)).")") if @b_keys_missing;
-            return @R;
-        }
-
-        # Then compare all values.
-
-        foreach (keys %$a) {
-            $prind->("comparing values of key '$_'") if $dump;
-            push @R, deep_compare($a->{$_}, $b->{$_}, $prec, $dump, ($ind||0) + 1);
-        }
-    } elsif ($atp eq 'ARRAY') {
-        # Deep-compare two arrays.
-
-        if ($#$a != $#$b) {
-            $result->("different array sizes ($#$a, $#$b)")
-        } else {
-            for (my $i = 0; $i < $#$a; ++$i) {
-                push @R, deep_compare($a->[$i], $b->[$i], $prec, $dump, ($ind||0) + 1);
-            }
-        }
-    } elsif ($atp eq 'REF') {
-        # Reference to reference.
-
-        $prind->("dereferencing") if $dump;
-        deep_compare($$a, $$b, $prec, $dump, $ind + 1)
+			$match->()
+        } return @R
     } else {
-        $result->("cannot compare reference-type $atp");
-    }
-    return @R;
+		# Deep-compare two references.
+		my $recurse = sub($$) { deep_compare($_[0], $_[1], $prec, $dump, $ind + 1) };
+		prind($ind, $prefix->()) if $dump;
+		if ($atp eq 'SCALAR') {
+			# Two scalars refs.
+			push @R, $recurse->($$a, $$b);
+			return @R
+		} elsif ($atp eq 'HASH') {
+			# Deep-compare two hashes.  First test number of key/value-pairs.
+			my $acnt = keys %$a;
+			my $bcnt = keys %$b;
+			unless ($acnt == $bcnt) {
+				$mismatch->("different number of keys ($acnt, $bcnt)");
+				return @R;
+			} return @R if $acnt == 0; # no keys
+
+			# Although both hashes have an equal number of keys, make sure that the keys themselves
+			# are equal, and only then compare values.
+			my @a_keys_missing = grep { not exists $b->{$_} } keys %$a;
+			my @b_keys_missing = grep { not exists $a->{$_} } keys %$b;
+
+			if (@a_keys_missing || @b_keys_missing) {
+				$mismatch->('1st hash misses keys ('.join(', ', map { quote($_) } @a_keys_missing).")") if @a_keys_missing;
+				$mismatch->('2nd hash misses keys ('.join(', ', map { quote($_) } @b_keys_missing).")") if @b_keys_missing;
+				return @R;
+			}
+
+			foreach (keys %$a) {
+				prind($ind, "key '$_'") if $dump;
+				push @R, $recurse->($a->{$_}, $b->{$_});
+			}
+		} elsif ($atp eq 'ARRAY') {
+			# Deep-compare two arrays.
+			if ($#$a != $#$b) {
+				$mismatch->("different array sizes: ${\(1+$#$a)} vs. ${\(1+$#$b)}")
+			} else {
+				for (0 .. $#$a) {
+					prind($ind, "index [$_]") if $dump;
+					push (@R, $recurse->($a->[$_], $b->[$_]))
+				}
+			}
+		} elsif ($atp eq 'REF') {
+			# Reference to reference.
+			$recurse->($$a, $$b)
+		} else {
+			$mismatch->("cannot compare types $atp");
+		}
+	} return @R;
 }
 
-=head3 F<fork_and_wait()> and F<synthesize_pathname()>
+=head3 F<fork_and_wait(PROGRAM[, ARGS...])>
 
-=over
-
-=item F<fork_and_wait(PROGRAM[, ARGS...])>
-
-Forks a process and waits for completion.  The function will extract the exit-code, test whether
-the process died and prints status messages on F<stderr>.  F<fork_and_wait()> hence is a handy
+Forks a process  and waits for completion.   The function will extract the  exit-code, test whether
+the process  died and  prints status messages  on F<STDERR>.   F<fork_and_wait()> hence is  a handy
 wrapper around the built-in F<system()> and F<exec()> functions.  Returns an array of three values:
 
     ($exit_code, $failed, $coredump)
 
-F<$exit_code> is -1 when the program failed to execute (e.g. it wasn't found or the current user
-has insufficient rights).  Otherwise F<$exit_code> is between 0 and 255.  When the program died on
-receipt of a signal (like F<SIGINT> or F<SIGQUIT>) then F<$signal> stores it. When F<$coredump> is
-true the program died and a F<core> file was written.  (Note that some systems store F<core>s
-somewhere else than in the programs' working directory.)
+F<$exit_code> is -1  when the program failed to  execute (e.g. it wasn't found or  the current user
+has insufficient rights).  Otherwise F<$exit_code> is between  0 and 255.  When the program died on
+receipt of a signal (like F<SIGINT> or  F<SIGQUIT>) then F<$signal> stores it. When F<$coredump> is
+true the program died and a F<core>-file was written.
 
-=item F<synthesize_pathname(TEXT...)>
+=head3 F<synthesize_pathname(TEXT...)>
 
-Concatenates and forms all TEXT strings into a symbolic name that can be used as a pathname.
-F<synthesize_pathname()> is a useful function to reuse a string, assembled from multiple strings,
-coinstantaneously as hash key, database name, and file- or URL name.  Note, however, that few
-characters are mapped to only C<"_"> and C<"-">.
-
-=back
+Concatenates and  forms all  TEXT strings  into a  symbolic name that  can be  used as  a pathname.
+F<synthesize_pathname()>  is a useful  function to  concatenate strings  and nearby  converting all
+characters that  do not qualify as  filename-characters, into C<"_"> and  C<"-">.  Effectively this
+function returns a  symbolic name.  The result cannot only  be used as file- or  URL name, but also
+(coinstantaneously) as hash key, database name etc.
 
 =cut
 
@@ -3630,7 +3584,7 @@ sub fork_and_wait(@)
         print STDERR "\n\tchild died with signal %d, %s core-dump\n", $signal, $coredump ? 'with' : 'without';
     } else {                    # ok
         $exit_code = $? >> 8;
-        printf STDERR "\n\tchild exited with value %d\n", $exit_code if $DEBUG;
+        printf STDERR "\n\tchild exited with value %d\n", $exit_code, "\n" if $DEBUG;
     }
     return ($exit_code, $signal, $coredump)
 }
@@ -3639,23 +3593,24 @@ sub synthesize_pathname(@)
 {
     my @s = @_;
     my($dch1, $dch2) = ('-', '_');
-    join('_', map { my
-                    # Unquote.
-                    $s =~ s/^"(.+)"\z/$1/;
-                    # Escape all non-printables.
-                    $s = escape($_);
-                    # Undo \" \'
-                    $s =~ s/\\(["'])/$1/go;
-                    $s =~ s/[']/_/g;
-                    $s =~ s/"(.+)"/$dch2$dch2$1$dch2$dch2/o; # "xxx" within string => __xxx__
-                    # Handle \NNN
-                    $s =~ s/[\\]/0/g; # eg. \347 => 0347
-                    # Filename
-                    $s =~ s/[\(\|\)\/:;]/$dch1/go; # ( | ) / : ; ==> -
-                    $s =~ s/[\^<>:,;\"\$\s\?!\&\%\*]/$dch2/go; # ^ < > " $ ? ! & % * , ; : wsp => _
-                    $s =~ s/^[\-\s]+|[\-\s]+\z//o;
-                    $s
-                } @s
+    join('_',
+		 map {
+			 # Unquote.
+			 s/^"(.+)"\z/$1/;
+			 # Escape all non-printables.
+			 $_ = escape($_);
+			 # Undo \" \'
+			 s/\\(["'])/$1/go;
+			 s/[']/_/g;
+			 s/"(.+)"/$dch2$dch2$1$dch2$dch2/o; # "xxx" within string => __xxx__
+			 # Handle \NNN
+			 s/[\\]/0/g; # eg. \347 => 0347
+			 # Filename
+			 s/[\(\|\)\/:;]/$dch1/go;			 # ( | ) / : ; ==> -
+			 s/[\^<>:,;\"\$\s\?!\&\%\*]/$dch2/go; # ^ < > " $ ? ! & % * , ; : wsp => _
+			 s/^[\-\s]+|[\-\s]+\z//o;
+			 $_
+		 } @s
         )
 }
 
@@ -3664,7 +3619,9 @@ sub synthesize_pathname(@)
 =head3 Exporter Tags
 
 Three tags are available that import function sets. These are utility functions usable also
-separately from F<Data::Rlist>.
+separately from F<Data::Rlist>.  For example,
+
+    use Data::Rlist qw/:floats :strings/;
 
 =over
 
@@ -3688,74 +3645,62 @@ Imports F<L</deep_compare>()>, F<L</fork_and_wait>()> and F<L</synthesize_pathna
 
 =back
 
-For example,
-
-    use Data::Rlist qw/:floats :strings/;
-
 =head3 Auto-Exported Functions
 
 The following functions are implicitly imported into the callers symbol table.  (But you may say
 F<require Data::Rlist> instead of F<use Data::Rlist> to prohibit auto-import.  See also
 L<perlmod>.)
 
-=over
+=head3 F<ReadData(INPUT[, FILTER, FILTER-ARGS])>
 
-=item F<ReadData(INPUT[, FILTER, FILTER-ARGS])>
+=head3 F<ReadCSV(INPUT[, OPTIONS, FILTER, FILTER-ARGS])>
 
-=item F<ReadCSV(INPUT[, OPTIONS, FILTER, FILTER-ARGS])>
+=head3 F<ReadConf(INPUT[, OPTIONS, FILTER, FILTER-ARGS])>
 
-=item F<ReadConf(INPUT[, OPTIONS, FILTER, FILTER-ARGS])>
-
-Another way to call F<Data::Rlist::L</read>()>, F<Data::Rlist::L</read_csv>()> and
+These    are   aliases    for   F<Data::Rlist::L</read>()>,    F<Data::Rlist::L</read_csv>()>   and
 F<Data::Rlist::L</read_conf>()>.
 
-=item F<WriteData(DATA[, OUTPUT, OPTIONS, HEADER])>
+=head3 F<WriteData(DATA[, OUTPUT, OPTIONS, HEADER])>
 
-=item F<WriteCSV(DATA[, OUTPUT, OPTIONS, COLUMNS, HEADER])>
+=head3 F<WriteCSV(DATA[, OUTPUT, OPTIONS, COLUMNS, HEADER])>
 
-=item F<WriteConf(DATA[, OUTPUT, OPTIONS, HEADER])>
+=head3 F<WriteConf(DATA[, OUTPUT, OPTIONS, HEADER])>
 
-Another way to call F<Data::Rlist::L</write>()>, F<Data::Rlist::L</write_csv>()> and
+These   are   aliases    for   F<Data::Rlist::L</write>()>,   F<Data::Rlist::L</write_csv>()>   and
 F<Data::Rlist::L</write_conf>()>.
 
-=item F<OutlineData(DATA[, OPTIONS])>
+=head3 F<OutlineData(DATA[, OPTIONS])>
 
-=item F<StringizeData(DATA[, OPTIONS])>
+=head3 F<StringizeData(DATA[, OPTIONS])>
 
-=item F<SqueezeData(DATA[, OPTIONS])>
+=head3 F<SqueezeData(DATA[, OPTIONS])>
 
-Another way to call F<Data::Rlist::L</make_string>()>.  F<OutlineData()> applies the predefined
-L<C<"outlined">|/Predefined Options> options, while F<StringizeData()> applies
+These are  aliases for F<Data::Rlist::L</make_string>()>.  F<OutlineData()>  applies the predefined
+L<C<"outlined">|/Predefined     Options>      options,     while     F<StringizeData()>     applies
 L<C<"string">|/Predefined Options> and F<SqueezeData>() L<C<"squeezed">|/Predefined Options>.  When
-specified, OPTIONS are merged into the predefined set by means of F<L<complete_options>()>.  For
+specified, OPTIONS are  merged into the predefined set by  means of F<L</complete_options>()>.  For
 example,
 
     print "\n\$thing: ", OutlineData($thing, { precision => 12 });
 
 F<L<rounds|/round>()> all numbers in F<$thing> to 12 digits.
 
-=item F<PrintData(DATA[, OPTIONS])>
+=head3 F<PrintData(DATA[, OPTIONS])>
 
-Another way to say
+Just another way for
 
     print OutlineData(DATA, OPTIONS);
 
-For example,
+=head3 F<KeelhaulData(DATA[, OPTIONS])>
 
-    print OutlineData($thing);
+=head3 F<CompareData(A, B[, PRECISION, PRINT_TO_STDOUT])>
 
-=item F<KeelhaulData(DATA[, OPTIONS])>
-
-=item F<CompareData(A, B[, PRECISION, PRINT_TO_STDOUT])>
-
-Another way to call F<L</keelhaul>()> and F<L</deep_compare>()>. For example,
+These are  aliases for F<L</keelhaul>()> and F<L</deep_compare>()>. For example,
 
     use Data::Rlist;
         .
         .
     my($copy, $as_text) = KeelhaulData($thing);
-
-=back
 
 =cut
 
@@ -3820,11 +3765,11 @@ sub CompareData($$;$$) {        # recursively compare data
 
 =head1 NOTES
 
-The F<Random Lists> (Rlist) syntax is inspired by NeXTSTEP's F<Property Lists>.  Rlist is simpler,
-more readable and more portable.  The Perl, C and C++ implementations are fast, stable and free.
-Markus Felten, with whom I worked a few month in a project at Deutsche Bank, Frankfurt in summer
-1998, arrested my attention on Property lists.  He had implemented a Perl variant of it
-(F<L<http://search.cpan.org/search?dist=Data-PropertyList>>).
+The  F<Random Lists> (Rlist)  syntax is  inspired by  NeXTSTEP's F<Property  Lists>.  But  Rlist is
+simpler,  more readable and  more portable.   The Perl,  Python and  C++ implementations  are fast,
+stable and  free.  Markus Felten,  with whom I worked  a few month  in a project at  Deutsche Bank,
+Frankfurt in  summer 1998,  arrested my  attention on Property  lists.  He  had implemented  a Perl
+variant of it (F<L<http://search.cpan.org/search?dist=Data-PropertyList>>).
 
 The term "Random" underlines the fact that the language
 
@@ -3861,14 +3806,14 @@ Rlists are not Perl syntax:
 =head2 Speeding up Compilation (Explicit Quoting)
 
 Much work has been spent to optimize F<Data::Rlist> for speed.  Still it is implemented in pure
-Perl (no XS).  A very rough estimate for Perl 5.8 is "each MB takes one second per GHz".  For
+Perl (no XS).  A very rough estimation for Perl 5.8 is "each MB takes one second per GHz".  For
 example, when the resulting Rlist file has a size of 13 MB, compiling it from a Perl script on a
 3-GHz-PC requires about 5-7 seconds.  Compiling the same data under Solaris, on a sparcv9 processor
 operating at 750 MHz, takes about 18-22 seconds.
 
 The process of compiling can be speed up by calling F<L</quote>()> explicitly on scalars. That is,
-before calling F<L</write>()> or F<L</write_string>()>.  Large data sets may compile faster when
-for scalars, that certainly not qualify as symbolic name, F<L</quote>()> is called in advance:
+before calling F<L</write>()> or F<L</write_string>()>.  Big data sets may compile faster when for
+scalars, that certainly not qualify as symbolic name, F<L</quote>()> is called in advance:
 
     use Data::Rlist qw/:strings/;
 
@@ -3884,46 +3829,39 @@ instead of
         .
     Data::Rlist::write("data.rlist", \%data);
 
-It depends on the case whether the first variant is faster: F<L</compile>()> and
+It   depends  on   the  case   whether   the  first   variant  is   faster:  F<L</compile>()>   and
 F<L</compile_fast>()> both have to call F<L</is_random_text>()> on each scalar.  When the scalar is
-already quoted, i.e. its first character is C<">, this test ought to run faster.
+already quoted, i.e., its first character is C<">, this test ought to run faster.
 
-Note that internally F<L</is_random_text>()> applies the precompiled regex F<$g_re_value>.  But for
-a given scalar F<$s> the expression S<F<($s !~ $Data::Rlist::g_re_value)>> can be up to 20% faster
-than the equivalent F<is_random_text($s)>.
+Note     that    internally     F<L</is_random_text>()>    applies     the     precompiled    regex
+F<$Data::Rlist::REValue>.    But   for  a   given   scalar   F<$s>   the  expression   S<F<($s   !~
+$Data::Rlist::REValue)>> can be up to 20% faster than the equivalent F<is_random_text($s)>.
 
 =head2 Quoting strings that look like numbers
 
-Normally you don't have to care about strings, since un/quoting happens as required when
-reading/compiling Rlists from Perl data.  A common problem, however, occurs when some text fragment
-(string) uses the same lexicography than numbers do.
+Normally  you  don't  have to  care  about  strings,  since  un/quoting  happens as  required  when
+reading/compiling Rlist  or CSV text.   A common problem,  however, occurs when some  text fragment
+(string) uses  the same lexicography  than numbers do.
 
-Printed text uses well-defined glyphs and typographic conventions, and finally the competence of
-the reader to recognize numbers.  But computers need to know the exact number type and format.
-Integer?  Float?  Hexadecimal?  Scientific?  Klingon?  The Perl Cookbook in recipe 2.1 recommends
-the use of a regular expression to distinguish number from string scalars.  The advice illustrates
-how hard the problem actually is.  Not only Perl has to come over this; any program that interprets
-text has to.
-
-Since Perl scripts are texts that process text into more text, Perl's artful answer was to define
-F<typeless scalars>. Scalars hold a number, a string or a reference. Therewith Perl solves the
-problem that digits, like alphabetics and punctuations, are regular ASCII codes.  So Perl defines
-F<the string> as the basic building block for all program data. Venturesome it then lets the
-program decide F<what strings mean>.  Analogical, in a printed book the reader has to decipher the
-glyphs and decide what evidence they hide.
+Perl defines F<the string> as the basic building  block for all program data, then lets the program
+decide F<what strings mean>.   Analogical, in a printed book the reader  has to decipher the glyphs
+and  decide  what evidence  they  hide.   Printed text  uses  well-defined  glyphs and  typographic
+conventions, and finally the competence of the reader, to recognize numbers.  But computers need to
+know the exact number type and  format.  Integer?  Float?  Hexadecimal?  Scientific?  Klingon?  The
+Perl Cookbook recommends the use of a  regular expression to distinguish number from string scalars
+(recipe 2.1).
 
 In Rlist, string scalars that look like numbers need to be quoted explicitly.  Otherwise, for
-example, the scalar F<$s=C<"-3.14">> appears as F<-3.14> in the output. Likewise C<"007324"> is
-compiled into 7324 - the text quality is lost and the scalar is read back as a number.  Of course,
-this behavior is by intend, and in most cases this is just what you want. For hash keys, however,
-it might be a problem.  One solution is to prefix the string by an artificial C<"_">:
+example, the string scalar C<"-3.14"> appears as F<-3.14> in the output. Likewise C<"007324"> is
+compiled into 7324. Then the text quality is lost and the scalar is read back as a number.  Of
+course, this behavior is by intend, and in most cases this is just what you want. For hash keys,
+however, it might be a problem.  One solution is to prefix the string with C<"_">:
 
     my $s = '-9'; $s = "_$s";
 
-Since the scalar begins with a C<"_"> it does not qualify as a number anymore, and hence is
-compiled as string, and read back as string.  In the C++ implementation it will then become some
-F<std::string>, not a F<double>.  But the leading C<"_"> has to be removed by the reading program.
-Perhaps a better solution is to explicitly call F<Data::Rlist::quote>:
+Such strings do not qualify as a number anymore.  In the C++ implementation it will then become
+some F<std::string>, not a F<double>.  But the leading C<"_"> has to be removed by the reading
+program.  Perhaps a better solution is to explicitly call F<Data::Rlist::quote>:
 
     $k = -9;
     $k = Data::Rlist::quote($k); # returns qq'"-9"'
@@ -3933,19 +3871,19 @@ Perhaps a better solution is to explicitly call F<Data::Rlist::quote>:
     $k = 3.14_15_92;
     $k = quote($k);             # returns qq'"3.141592"'
 
-Again, the need to quote strings that look like numbers is a problem evident only in the Perl
-implementation of Rlist, since Perl is a language with weak types. As a language with very strong
+Again, the  need to quote  strings that  look like numbers  is a problem  evident only in  the Perl
+implementation of Rlist, since  Perl is a language with weak types. As  a language with very strong
 typing C++ is quasi the antipode to Perl. With the C++ implementation of Rlist then there's no need
-to quote strings that look like numbers.
-
-See also F<L</write>()>, F<L</is_number>()>, F<L</is_symbol>()>, F<L</is_random_text>()> and
+to  quote   strings  that  look   like  numbers.   See  also   F<L</write>()>,  F<L</is_number>()>,
+F<L</is_symbol>()>,                           F<L</is_random_text>()>                           and
 F<L<http://en.wikipedia.org/wiki/American_Standard_Code_for_Information_Interchange>>.
 
 =head2 Installing F<Rlist.pm> locally
 
-Installing CPAN packages usually requires administrator privileges.  In case you don't have them,
-another way is to copy the F<Rlist.pm> file into a directory of your choice, e.g. into F<.> or
-F<~/bin>.  Instead of F<use Data::Rlist;>, however, you then use the following code:
+Installing CPAN  packages usually requires  administrator privileges.  Another  way is to  copy the
+F<Rlist.pm> file  into a directory of  your choice, e.g. into  F<.> or F<~/bin>.   Instead of F<use
+Data::Rlist;>, however,  you then use the  following code.  It  finds F<Rlist.pm> also in  F<.> and
+F<~/bin>, and then calls the F<Exporter> manually:
 
     BEGIN {
         $0 =~ /[^\/]+$/;
@@ -3954,8 +3892,6 @@ F<~/bin>.  Instead of F<use Data::Rlist;>, however, you then use the following c
         Data::Rlist->import();
         Data::Rlist->import(qw/:floats :strings/);
     }
-
-This code finds F<Rlist.pm> also in F<.> and F<~/bin>, and then calls the F<Exporter> manually.
 
 =head2 Package Dependencies
 
@@ -3978,24 +3914,25 @@ substantially slow your program (see also L<perlre>).
 
 F<This is supplement information for L</compile>().>
 
-Typeglobs are an idiosyncracy of Perl. Perl uses a symbol table per package (namespace) to map
-symbolic names like F<foo> to Perl values.  Humans use abstract symbols to name things, because we
-can remember symbols better than numbers, or formulas that hide numbers.
+Typeglobs are  an idiosyncracy  of Perl.  Typeglob objects are  symbol table  entries. Perl  uses a
+symbol table per package (namespace) to map  symbolic names like F<foo> to Perl values.  Humans use
+abstract symbols to name  things, because we can remember symbols better  than numbers, or formulas
+that hide numbers.
 
-Typeglob objects are symbol table entries.
-
-The idiosyncracy is that different types need only one entry - one symbol can name all types of
-Perl data (scalars, arrays, hashes) and nondata (functions, formats, I/O handles).  For example,
-the symbol F<foo> is mapped to the typeglob F<*foo>. Therein coexist F<$foo> (the scalar value),
-F<@foo> (the list value), F<%foo> (the hash value), F<&foo> (the code value) and F<foo> (the I/O
-handle or the format specifier).  There's no key C<"$foo"> or C<"@foo"> in the symbol table, only
+The idiosyncracy  is that different types need  only one entry -  one symbol can name  all types of
+Perl data  (scalars, arrays, hashes) and  nondata (functions, formats, I/O  handles).  For example,
+the symbol F<foo>  is mapped to the  typeglob F<*foo>. Therein coexist F<$foo>  (the scalar value),
+F<@foo> (the list  value), F<%foo> (the hash value),  F<&foo> (the code value) and  F<foo> (the I/O
+handle or the format  specifier).  There's no key C<"$foo"> or C<"@foo">  in the symbol table, only
 C<"foo">.
 
-The symbol table is an ordinary hash, named like the package with two colons appended.  The main
-symbol table's name is thus F<%main::>, or F<%::>.  Internally this is called a F<stash> (for
-symbol table hash).  In the C code that implements Perl, F<%::> is the global variable F<defstash>
-(default stash).  It holds items in the F<main> package.  But, as if it were a symbol in a stash,
-F<perl> arranges it as typeglob-ref:
+The symbol table  is an ordinary hash, named  like the package with two colons  appended.  The main
+symbol table's  name is  thus F<%main::>,  or F<%::>.  Internally  this is  called a  F<stash> (for
+symbol table hash).  F<perl> will create one stash per package.
+
+In the C code that implements Perl,  F<%::> is the global variable F<defstash> (default stash).  It
+holds items in the F<main> package.  But, as if it were a symbol in a stash, F<perl> arranges it as
+typeglob-ref:
 
     $ perl -e 'print \*::'
     GLOB(0x10010f08)
@@ -4003,10 +3940,6 @@ F<perl> arranges it as typeglob-ref:
 But the root-stash F<defstash> lists stashes from all other packages. For example, the symbol
 F<Data::> in stash F<%::> addresses the stash of package F<Data>, and the symbol F<Rlist::> in the
 stash F<%Data::> addresses the stash of package F<Data::Rlist>.
-
-Stashes are symbol tables. F<perl> has one stash per package.
-
-All F<\*names::> are actually stash-refs, but Perl calls them globs.
 
 Like all hashes stashes contain string keys, which name symbols, and values which are typeglobs.
 In the C implementation of Perl typeglobs have the F<struct> type F<GV>, for F<Glob value>.
@@ -4021,16 +3954,20 @@ etc.
 
 =item *
 
-The sigil F<*> serves as wildcard for the other sigils F<%>, F<@>, F<$> and F<&>. A F<sigil> is a
-symbol created for a specific magical purpose; the name derives from the latin F<sigilum> = seal.
+The sigil F<*> serves as wildcard for the other sigils F<%>, F<@>, F<$> and F<&>. (A F<sigil> is a
+symbol created for a specific magical purpose; the name derives from the latin F<sigilum> = seal.)
+
+=item *
+
+F<\*names::> are actually stash-refs, but Perl calls them globs.
 
 =back
 
-Modifying F<$foo> in a Perl program won't change F<%foo>.  Each typeglob is merely a set of
-pointers to separate objects describing scalars, arrays, hashes, functions, formats and I/O
-handles.  Normally only one pointer F<*foo> is non-null.  Because typeglobs host pointers,
-F<*foo{ARRAY}> is a way to say F<\@foo>. To get a reference to the typeglob for symbol F<*foo> you
-say F<*foo{GLOB}>, or F<\*foo>.  But on the other hand it is not quite clear why
+Modifying  F<$foo> in  a Perl  program won't  change F<%foo>.   Each typeglob  is merely  a  set of
+pointers  to  separate objects  describing  scalars, arrays,  hashes,  functions,  formats and  I/O
+handles.   Normally only  one pointer  in F<*foo>  is non-null.   Because typeglobs  host pointers,
+F<*foo{ARRAY}> is a way to say F<\@foo>. To  get a reference to the typeglob for symbol F<*foo> you
+say F<*foo{GLOB}>, or F<\*foo>.  But it is not quite clear why F<perl> this is an error:
 
     $ perl -e 'exists *foo{GLOB}'
     exists argument is not a HASH or ARRAY element at -e line 1.
@@ -4048,29 +3985,30 @@ Assigning a scalar alters the symbol, not the typeglob:
     $ perl -e '$x = 42; *foo = $x; print *42'
     *main::42
 
-Hmm.
+Consider also:
 
     $ perl -e 'print 1*9'
     9
     $ perl -e 'print *9'
     *main::9
 
-I wish it wouldn't do that.
+And also:
 
     $ perl -e '*foo = 42; print $::{42}, *foo'
     *main::42*main::42
 
-Enough, this is very strange.
+IMHO it should not do that.
 
 Maybe the best use of typeglobs are F<Typeglob-aliases>. For example, S<F<*bar = *foo>> aliases the
-symbol F<bar> in the stash.  Then the symbols F<foo> and F<bar> point to the same typeglob!  This
-means that when you declare S<F<sub foo {}>> after casting the alias, F<bar()> is F<foo()>.  The
+symbol F<bar> in the  stash.  Then the symbols F<foo> and F<bar> point  to the same typeglob!  This
+means that when  you declare S<F<sub foo {}>>  after casting the alias, F<bar()>  is F<foo()>.  The
 penalty, however, is that the F<bar> symbol cannot be easily removed from the stash.  One way is to
-say F<local *bar>, wich temporarily assigns a new typeglob to F<bar> with all pointers zeroized.
+say  F<local *bar>, wich  temporarily assigns  a new  typeglob to  F<bar> (in  its stash)  with all
+pointers zeroized.
 
-What is this good for?  This is not quite clear. Obviously it is just an artefact from Perl 4.  In
-fact, F<local> typeglob aliases seem to be faster than references, because no dereferencing is
-required. For example,
+What is this good for?  This is not quite clear. Obviously an artefact from Perl4, it once made old
+scripts compatible with Perl5.  In fact, F<local> typeglob aliases seem to be faster than
+references, because no dereferencing is required. For example,
 
     void f1 { my $bar = shift; ++$$bar }
     void f2 { local *bar = shift; ++$bar }
@@ -4078,50 +4016,57 @@ required. For example,
     f1(\$foo);                  # increments $foo
     f1(*foo);                   # dto., but faster
 
-Note, however, that F<my> variables (lexical variables) are not stored in stashes, and do not use
-typeglobs. These variables are stored in a special array, the F<scratchpad>, assigned to each
-block, subroutine, and thread. These are real private variables, and they cannot be F<local>ized.
-Each lexical variable occupies a slot in the scratchpad; hence is addressed by an integer index,
-not a symbol. F<my> variables are like F<auto> variables in C. They're also faster than F<local>s,
-because they're allocated at compile time, not runtime. Therefore you cannot declare F<*foo>
+Note, however, that F<my>  variables (lexical variables) are not stored in  stashes, and do not use
+typeglobs.  These variables are  stored in  a special  array, the  F<scratchpad>, assigned  to each
+block, subroutine, and thread. These are really private variables, and they cannot be F<local>ized.
+Each lexical variable  occupies a slot in the  scratchpad; hence is addressed by  an integer index,
+not a symbol. F<my> variables are like  F<auto> variables in C. They're also faster than F<local>s,
+because they can  be allocated at compile  time, not runtime. Therefore you  cannot declare F<*foo>
 lexically:
 
     $ perl -e 'my(*foo);'
     Can't declare ref-to-glob cast in "my" at -e line 1, near ");"
     Execution of -e aborted due to compilation errors.
 
-Also it is somewhat confusing that F<$foo> and F<@foo> etc. have concrete values, while F<*foo> is
-said to be F<*main::foo>:
+Also it is somewhat confusing that F<$foo> and F<@foo> etc. have concrete values, while
+F<*foo> does not strip into
+
+    (SCALAR => \$foo, HASH => \@foo)
+
+in case, for example, F<$foo> and C<%foo> had incarnated.  Instead it is said to be F<*main::foo>:
 
     $ perl -e 'print *foo'
     *main::foo
+
+As one  can see the  stash entry is  arranged by F<perl>  on the fly,  even with the  F<use strict>
+pragma in effect:
+
     $ perl -e 'package nirvana; use strict; print *foo;'
     *nirvana::foo
 
-Hence the value of a typeglob is a full path into the F<perl> stashes, down from the F<defstash>.
-The stash entry is arranged by F<perl> on the fly, even with the F<use strict> pragma in effect.
-One needs to get used to the fact that F<*foo> returns a symbol path, not something like
+So the value of a typeglob is a full path into the F<perl> stashes, down from the F<defstash>.  But
+what actually is F<*main::foo>?
 
-    (SCALAR => \$foo, ARRAY => \@foo)
+    $ perl -e 'print "*foo is not interpolated"'
+    *foo is not interpolated
+    $ perl -e 'print "although ".*foo." could be a string"'
+    although *main::foo could be a string
+    $ perl -e 'print "*foo is \"*main::foo\"" if *foo eq "*main::foo"'
+    *foo is "*main::foo"
+    $ perl -e 'package nirvana; sub f { local *g=shift; print *g."=$g" }; package main; $foo=42; nirvana::f(*foo)'
+    *main::foo=42
 
-for all its non-null pointers (in this example, the symbol F<foo> would have had incarnated as
-F<$foo> and F<@foo>).
+Conclusion: with typeglobs you reach the bedrock of F<perl>, where the spade bends back.
 
-Conclusion: with typeglobs you reach the bedrock of Perl, where the spade bends back.
-
-See also L<perlguts>, L<perlref>, L<perldsc> and L<perllol>.
+More on this L<perlguts>, L<perlref>, L<perldsc> and L<perllol>.
 
 =head1 BUGS
 
 There are no known bugs, this package is stable.
 
-Deficiencies of this version:
+Deficiencies and TODOs:
 
 =over
-
-=item *
-
-L<nanoscripts|/Embedded Perl Code> not yet implemented.
 
 =item *
 
@@ -4138,7 +4083,7 @@ IEEE 754 notations of Infinite and NaN not yet implemented.
 
 =item *
 
-F<L<compile_Perl>()> is experimental.
+F<L</compile_Perl>()> is experimental.
 
 =back
 
@@ -4172,15 +4117,15 @@ where F<Data::Rlist> writes
             num_threads = 5;
                 .
                 .
-        }
+        };
     }
 
 As one can see F<Data::Dumper> writes the data right in Perl syntax, which means the dumped text
-can be simply F<eval>'d.  This means data can be restored very fast. Rlists are not quite
-Perl-syntax: a dedicated parser is required.  But therefore Rlist text is portable and can be read
-from other programming languages, namely C++, where a fast flex/bison-parser in conjunction with a
-smart heap management is implemented. So C++ programs, like Perl programs, are able to handle Rlist
-files of several hundred MB.
+can be simply F<eval>'d, and the data can be restored very fast. Rlists are not quite Perl-syntax:
+a dedicated parser is required.  But therefore Rlist text is portable and can be read from other
+programming languages, namely C++, where a fast flex/bison-parser in conjunction with a smart heap
+management is implemented. So C++ programs, like Perl programs, are able to handle Rlist files of
+several hundred MB.
 
 With F<$Data::Dumper::Useqq> enabled it was observed that F<Data::Dumper> renders output
 significantly slower than F<L</compile>()>. This is actually suprising, since F<Data::Rlist> tests
@@ -4188,36 +4133,36 @@ for each scalar whether it is numeric, and truely quotes/escapes strings.  F<Dat
 all scalars (including numbers), and it does not escape strings.  This may also result in some odd
 behaviors.  For example,
 
-	use Data::Dumper;
-	print Dumper "foo\n";
+    use Data::Dumper;
+    print Dumper "foo\n";
 
 yields
 
-	$VAR1 = 'foo
-	';
+    $VAR1 = 'foo
+    ';
 
 while
 
-	use Data::Rlist;
-	PrintData "foo\n"
+    use Data::Rlist;
+    PrintData "foo\n"
 
 yields
 
-	{ "foo\n"; }
+    { "foo\n"; }
 
-Recall that F<L</parse>()> always returns a list, as array- or hash-reference.
+(Recall that F<L</parse>()> always returns a list, as array- or hash-reference.)
 
-Finally, F<Data::Rlist> generates smaller files. With the default F<$Data::Dumper::Indent> of 2
-F<Data::Dumper>'s output is 4-5 times that of F<Data::Rlist>'s, because F<Data::Dumper> recklessly
-uses many whitespaces (blanks) instead of horizontal tabulators. This blows up file sizes without
-measure. 
+Finally, F<Data::Rlist> generates smaller files.  With the default F<$Data::Dumper::Indent> of 2
+F<Data::Dumper>'s output is 4-5 times that of F<Data::Rlist>'s. This is because F<Data::Dumper>
+recklessly uses blanks, instead of horizontal tabulators, which blows up file sizes without
+measure.
 
 =head1 COPYRIGHT/LICENSE
 
 Copyright 1998-2007 Andreas Spindler
 
-Maintained at CPAN (L<http://search.cpan.org/~aspindler>) and the author's site
-(L<http://www.visualco.de>). Please send mail to F<rlist@visualco.de>.
+Maintained at CPAN (F<L<http://search.cpan.org/search?dist=Data-PropertyList>>) and the author's
+site (F<L<http://www.visualco.de>>). Please send mail to F<rlist@visualco.de>.
 
 This library is free software; you can redistribute it and/or modify it under the same terms as
 Perl itself, either Perl version 5.8.8 or, at your option, any later version of Perl 5 you may have
