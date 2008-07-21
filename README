@@ -1,11 +1,11 @@
-Data-Rlist version 1.39
+Data-Rlist version 1.42
 =======================
 
-$Writestamp: 2008-01-02 16:17:27 eh2sper$
+$Writestamp: 2008-07-20 23:23:53 andreas$
 
 ABOUT
 
-A lightweight data format language for Perl, C and C++.
+A lightweight data format language for Perl, Python and C++.
 
 INSTALLATION
 

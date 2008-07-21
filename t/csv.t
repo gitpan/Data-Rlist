@@ -1,10 +1,11 @@
+
 #!/usr/bin/perl
 #
 # csv.t
 #
 # Test .csv/conf-files.
 #
-# $Writestamp: 2008-02-10 23:48:12 andreas$
+# $Writestamp: 2008-07-20 23:16:13 andreas$
 # $Compile: perl -M'constant standalone => 1' csv.t$
 
 use warnings;

@@ -6,5 +6,9 @@ Revision history for Perl extension Data::Rlist.
 	- uploaded to CPAN 2007-12-04 to 2007-12-10
 
 1.39     Tue Jan  1 14:40:00 2008
-	- added nanoscript support and some sophisticated tests
+	- added nanoscript support and test scripts
+
+1.40-42  Sun Jul 20 23:25:00 2008
+	- updated POD
+	- make_string renamed into write_string_value
 

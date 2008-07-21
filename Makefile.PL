@@ -26,8 +26,14 @@
 # realclean: delete everything that cannot be restored by the maintainer,
 #     incl. the makefile generated.
 #
+# CPAN/PAUSE
+#
+# - https://pause.perl.org/
+#
+# - http://search.cpan.org/dist/Data-Rlist/
+#
 ##########
-# $Writestamp: 2008-07-17 17:23:05 eh2sper$
+# $Writestamp: 2008-07-20 23:21:56 andreas$
 # $Compile: make disttest$
 # $Clean: make realclean$
 
@@ -55,7 +61,16 @@ print "perl thinks the current OS is '$^O'\n";
 WriteMakefile(
 	NAME			=> 'Data::Rlist',
 	VERSION_FROM	=> 'lib/Data/Rlist.pm', # finds $VERSION
-    PREREQ_PM       => { },					# e.g., Module::Name => 1.1
+	PREREQ_PM		=> {					# e.g., Module::Name => 1.1
+		# These modules are required for testing only (i.e., by the t/*.t
+		# scripts).  Rlist.pm does not use them.  However, I do not know which
+		# version numbers shall be defined here. I could use the version on my
+		# machines, but this seems to be now statement.
+		'Benchmark' => '0',					# round.t
+		'B::Deparse' => '0',				# deparse.t
+		'MIME::Base64' => '0'				# binary.t, nanoscript.t
+    },
+
     ($] >= 5.005 ?				# add these new keywords supported since 5.005
 	 (ABSTRACT_FROM => 'lib/Data/Rlist.pm', # retrieve abstract from module
 	  AUTHOR		=> 'Andreas Spindler <rlist@visualco.de>') : ()),

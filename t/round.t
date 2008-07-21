@@ -4,7 +4,7 @@
 #
 # This test compares two Rlists compiled with different compile options.
 #
-# $Writestamp: 2007-12-12 16:39:05 eh2sper$
+# $Writestamp: 2008-07-20 23:05:19 andreas$
 # $Compile: perl -M'constant standalone => 1' round.t$
 
 use warnings;
