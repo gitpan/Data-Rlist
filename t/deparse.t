@@ -16,7 +16,7 @@
 #	Can't call method "name" on an undefined value at
 #	/usr/local/lib/perl5/5.8.4/sun4-solaris/B/Deparse.pm line 948.
 #
-# $Writestamp: 2007-12-07 18:43:25 eh2sper$
+# $Writestamp: 2008-07-21 17:07:19 andreas$
 # $Compile: perl -M'constant standalone => 1' deparse.t$
 
 use warnings;
@@ -44,7 +44,7 @@ our $tempfile = "$0.tmp";
                                                       # that string qualifies
                                                       # as here-doc
 	}
-	qw/new set get have require comptab compval escape unescape
+	qw/new set get have require comptab compval escape7 unescape7
 	   open_input read write
 	   compile compile1 compile2
 	   compile_fast compile_fast1

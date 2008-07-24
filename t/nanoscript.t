@@ -4,7 +4,7 @@
 #
 # Test bas64-encoded binaries.
 #
-# $Writestamp: 2008-01-02 16:17:01 eh2sper$
+# $Writestamp: 2008-07-24 16:42:44 eh2sper$
 # $Compile: perl -M'constant standalone => 1' nanoscript.t$
 
 BEGIN { unshift @INC, '../lib' if $constant::declared{'main::standalone'} }
@@ -52,6 +52,7 @@ __2
 	ok($_->has(-nanoscripts=>)) foreach @text;
 	ok($_->get(-nanoscripts=>)) foreach @text;
 	ok($_->nanoscripts) foreach @text;
+	#$Data::Rlist::DEBUG = 1;
 	ok($_->evaluate_nanoscripts) foreach @text;
 	#use Data::Dumper; print Dumper $text[2]->result;
 	ok(not CompareData($text[2]->result, ["Hello World!\n", "Hallo Welt!\n", "Bonjour le monde!\n", "Olá mundo!\n"]));
@@ -108,7 +109,8 @@ __2
 
 			ok(not CompareData($rl->result, { test => "", foo => [42] })) if $i == 0;
 			ok(not CompareData($rl->result, ["\n", "\n", 7, undef])) if $i == 1;
-			ok(not CompareData($rl->result, [0, "Hello World!\n", "Hallo Welt!\n",
+			ok(not CompareData($rl->result, [0,
+											 "Hello World!\n", "Hallo Welt!\n",
 											 "Bonjour le monde!\n", "Olá mundo!\n"])) if $i == 2;
 		}
 	}

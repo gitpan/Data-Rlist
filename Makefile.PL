@@ -20,7 +20,7 @@
 # disttest: run all tests without installing the distribution.
 #
 # dist: create archive to be uploaded to the PAUSE,
-#     e.g. <Data-Rlist-1.41.tar.gz>.  The version number is read from
+#     e.g. <Data-Rlist-1.43.tar.gz>.  The version number is read from
 #     <./lib/Data/Rlist.pm>.
 #
 # realclean: delete everything that cannot be restored by the maintainer,
@@ -33,8 +33,10 @@
 # - http://search.cpan.org/dist/Data-Rlist/
 #
 ##########
-# $Writestamp: 2008-07-20 23:21:56 andreas$
-# $Compile: make disttest$
+# $Writestamp: 2008-07-21 18:15:56 andreas$
+# $Compile: make disttest && make dist$
+# $Compile: perl Makefile.PL && make && make test$
+# $Compile: make dist$
 # $Clean: make realclean$
 
 use 5.006;
@@ -47,11 +49,11 @@ eval { require 5.6.0 } or die <<'EOD';
 ############
 EOD
 
-# Problem   with  Cygwin:  Unable   to  find   a  perl   5  (by   these  names:
-# /usr/bin/perl.exe  perl.exe perl5.exe  perl5.8.8.exe  miniperl.exe, in  these
+# Problem with Cygwin: Unable to find a perl 5 (by these names:
+# /usr/bin/perl.exe perl.exe perl5.exe perl5.8.8.exe miniperl.exe, in these
 # dirs: /cygdrive/h/bin /usr/local/bin /usr/bin /bin /usr/X11R6/bin ...
 #
-# MakeMaker then renders an unusable  Makefile! Why? $^O is "cygwin" and "which
+# MakeMaker then renders an unusable Makefile! Why? $^O is "cygwin" and "which
 # perl" suggests "/usr/bin/perl".
 
 print "perl thinks the current OS is '$^O'\n";

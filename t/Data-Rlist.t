@@ -5,7 +5,7 @@
 # Before `make install' is performed this script should be runnable with `make
 # test'. After `make install' it should work as `perl Data-Rlist.t'
 #
-# $Writestamp: 2008-01-02 16:12:56 eh2sper$
+# $Writestamp: 2008-07-21 17:07:21 andreas$
 # $Compile: perl -M'constant standalone => 1' Data-Rlist.t$
 
 BEGIN { unshift @INC, '../lib' if $constant::declared{'main::standalone'} }
@@ -39,12 +39,12 @@ if (quote_and_escape) {
 	use Data::Rlist qw/:strings deep_compare/;
 
 	ok(is_value($_), "is_value($_)") foreach qw/0 foo 3.14/;
-	ok(quote(undef) eq '""');
-	ok(quote(0) eq quote("0"));		   # ...dto
-	ok(quote('"0"') eq qq'"\\"0\\""'); # ...but this is different
-	ok(quote("'0'") eq qq("\\'0\\'"));
-	ok(escape("\\ü") eq "\\\\\\374");	# \\\374
-	ok(unescape("\\\\\\374") eq "\\ü");
+	ok(quote7(undef) eq '""');
+	ok(quote7(0) eq quote7("0"));		   # ...dto
+	ok(quote7('"0"') eq qq'"\\"0\\""'); # ...but this is different
+	ok(quote7("'0'") eq qq("\\'0\\'"));
+	ok(escape7("\\ü") eq "\\\\\\374");	# \\\374
+	ok(unescape7("\\\\\\374") eq "\\ü");
 
 	ok(exists Data::Rlist::read_string('5')->{5});
 	ok(exists Data::Rlist::read_string(42)->{"42"});
@@ -62,15 +62,15 @@ if (quote_and_escape) {
 
 	ok(!Data::Rlist::deep_compare(undef, undef));
 	ok( Data::Rlist::deep_compare(undef, 1));
-	ok(escape(undef) eq '' &&
-	   quote(undef) eq '""' &&
-	   quote("") eq '""' &&
-	   quote('') eq '""' &&
-	   quote(0) eq '"0"' && # Quoting scalar 0 is the same as...
-	   quote("0") eq '"0"' && # ...quoting "0", because quote() converts them
-                              # to strings. Therefore a scalar hosting "0" is
-                              # NOT implicited quoted when compiled, because it
-                              # looks like a number.
+	ok(escape7(undef) eq '' &&
+	   quote7(undef) eq '""' &&
+	   quote7("") eq '""' &&
+	   quote7('') eq '""' &&
+	   quote7(0) eq '"0"' &&	# Quoting scalar 0 is the same as...
+	   quote7("0") eq '"0"' && # ...quoting "0", because quote7() converts them
+                               # to strings. Therefore a scalar hosting "0" is
+                               # NOT implicited quoted when compiled, because
+                               # it looks like a number.
 	   1);
 }
 
