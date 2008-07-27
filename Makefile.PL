@@ -32,8 +32,10 @@
 #
 # - http://search.cpan.org/dist/Data-Rlist/
 #
+# - http://search.cpan.org/~aspindler/Data-Rlist-1.43/
+#
 ##########
-# $Writestamp: 2008-07-21 18:15:56 andreas$
+# $Writestamp: 2008-07-25 10:00:01 eh2sper$
 # $Compile: make disttest && make dist$
 # $Compile: perl Makefile.PL && make && make test$
 # $Compile: make dist$

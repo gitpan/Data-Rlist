@@ -8,8 +8,8 @@ Revision history for Perl extension Data::Rlist.
 1.39     Tue Jan  1 14:40:00 2008
 	- added nanoscript support and test scripts
 
-1.40-43  Sun Jul 20 23:25:00 2008
-	- updated POD
+1.40-44  Sun Jul 20 23:25:00 2008
+	- edited POD
 	- make_string renamed into write_string_value
 	- quote/escape renamed into quote7/escape7 (7-bit ASCII character set)
 

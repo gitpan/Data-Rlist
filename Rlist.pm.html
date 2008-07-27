@@ -70,11 +70,11 @@
 			</ul>
 
 			<li><a href="#c__">C++</a></li>
-			<li><a href="#bugs">Bugs</a></li>
 		</ul>
 
 	</ul>
 
+	<li><a href="#bugs">BUGS</a></li>
 	<li><a href="#copyright_license">COPYRIGHT/LICENSE</a></li>
 </ul>
 <!-- INDEX END -->
@@ -1149,7 +1149,7 @@ precision of 0  (converts all floats to  integers).</p>
 <dt><strong><a name="item_close_input"><em>close_input</em></a></strong>
 
 <dd>
-<p>Open/close  Rlist text  file or  string INPUT  for parsing.  Used internally  by  <em><a href="#item_read">read</a></em> and
+<p>Open/close  Rlist text  file  or string  INPUT for  parsing.   Used internally  by <em><a href="#item_read">read</a></em>  and
 <em><a href="#item_read_csv">read_csv</a></em>.</p>
 </dd>
 <dd>
@@ -1194,7 +1194,7 @@ command-line arguments to be appended to FILTER.  For example,</p>
 <dd>
 <p>This mode uses <em>sed</em> and a  temporary file.  It is enabled by setting <em>$Data::Rlist::SafeCppMode</em>
 to 1  (the default is  0).  It  protects single-line <em>#</em>-comments  when FILTER begins  with either
-<em>gcc</em>, <em>g++</em> or  <em>cpp</em>.  <em><a href="#item_open_input">open_input</a></em> then additionally runs <em>sed</em>  to convert all input
+<em>gcc</em>, <em>g++</em>  or <em>cpp</em>.  <em><a href="#item_open_input">open_input</a></em>  then additionally runs  <em>sed</em> to convert  all input
 lines beginning  with whitespace plus the  <em>#</em> character.  Only the  following <em>cpp</em>-commands are
 excluded, and only when they appear in column 1:</p>
 </dd>
@@ -1218,9 +1218,9 @@ read mode is not required.</p>
 <dt><strong><a name="item_lex"><em>lex()</em></a></strong>
 
 <dd>
-<p>Lexical scanner.  Called  by <em><a href="#item_parse">parse</a></em> to split the current line  into tokens.  <em>lex</em> reads
-<em>#</em>  or  <em>//</em>  single-line-comment  and  <em>/* */</em>  multi-line-comment  as  regular  white-spaces.
-Otherwise it returns tokens according to the following table:</p>
+<p>Lexical scanner.  Called by <em><a href="#item_parse">parse</a></em> to split  the current line into tokens.  <em>lex</em> reads <em>#</em>
+or <em>//</em> single-line-comment and <em>/* */</em> multi-line-comment as regular white-spaces.  Otherwise it
+returns tokens according to the following table:</p>
 </dd>
 <dd>
 <pre>
@@ -1267,8 +1267,8 @@ many programmers that <code>&quot;foo\nbar&quot;</code> cannot be expressed as h
 
 <dd>
 <p>Read Rlist language productions from current input.  This is a fast, non-recursive parser driven by
-the parser map <em>%Data::Rlist::Rules</em>, and fed by <em><a href="#item_lex">lex</a></em>.  It is called internally by
-<em><a href="#item_read">read</a></em>.  <em>parse</em> returns an array- or hash-reference, or <em>undef</em> in case of parsing
+the  parser  map  <em>%Data::Rlist::Rules</em>, and  fed  by  <em><a href="#item_lex">lex</a></em>.   It  is called  internally  by
+<em><a href="#item_read">read</a></em>.   <em>parse</em>  returns an  array-  or  hash-reference, or  <em>undef</em>  in  case of  parsing
 <em><a href="#item_errors">errors</a></em>.</p>
 </dd>
 </li>
@@ -1351,7 +1351,7 @@ applies the compiled regex <em>$Data::Rlist::REInteger</em>.</p>
 <dt><strong><a name="item_is_number"><em>is_number(SCALAR-REF)</em></a></strong>
 
 <dd>
-<p>Test for strings that look like numbers. <em>is_number</em>  can be used to test whether a scalar looks
+<p>Test for strings  that look like numbers. <em>is_number</em>  can be used to test whether  a scalar looks
 like  a  integer/float  constant  (numeric  literal).   The function  applies  the  compiled  regex
 <em>$Data::Rlist::REFloat</em>.  Note that it doesn't match</p>
 </dd>
@@ -1359,8 +1359,8 @@ like  a  integer/float  constant  (numeric  literal).   The function  applies  t
 <p>- leading or trailing whitespace,</p>
 </dd>
 <dd>
-<p>- lexical conventions such as the <code>&quot;0b&quot;</code> (binary), <code>&quot;0&quot;</code> (octal), <code>&quot;0x&quot;</code> (hex) prefix to denote a
-  number-base other than decimal, and</p>
+<p>- lexical conventions such as the <code>&quot;0b&quot;</code> (binary), <code>&quot;0&quot;</code> (octal), <code>&quot;0x&quot;</code> (hex) prefix to denote
+  a number-base other than decimal, and</p>
 </dd>
 <dd>
 <p>- Perls' legible numbers, e.g. <em>3.14_15_92</em>,</p>
@@ -1379,8 +1379,8 @@ like  a  integer/float  constant  (numeric  literal).   The function  applies  t
 <dt><strong><a name="item_is_symbol"><em>is_symbol(SCALAR-REF)</em></a></strong>
 
 <dd>
-<p>Test for symbolic names.  <em>is_symbol</em> can be used to test whether a scalar looks like a symbolic
-name.  Such strings need not to be quoted.  Rlist defines symbolic names as a superset of C
+<p>Test for symbolic names.   <em>is_symbol</em> can be used to test whether a  scalar looks like a symbolic
+name.   Such strings  need not  to be  quoted.  Rlist  defines symbolic  names as  a superset  of C
 identifier names:</p>
 </dd>
 <dd>
@@ -1395,7 +1395,7 @@ identifier names:</p>
 </dd>
 <dd>
 <p>For example, names such as <em>std::foo</em>, <em>msg.warnings</em>, <em>--verbose</em>, <em>calculation-info</em> need not
-be  quoted.</p>
+be quoted.</p>
 </dd>
 </li>
 <dt><strong><a name="item_is_value"><em>is_value(SCALAR-REF)</em></a></strong>
@@ -1435,7 +1435,7 @@ Mittag\n\&quot;&quot;</code>, while <em>escape7</em> returns <code>\&quot;Fr\374
 <dt><strong><a name="item_maybe_quote7"><em>maybe_quote7(TEXT)</em></a></strong>
 
 <dd>
-<p>Return <em>quote7(TEXT)</em> if <em><a href="#item_is_random_text">is_random_text</a>(TEXT)</em>; otherwise (TEXT defines a symbolic name or
+<p>Return <em>quote7(TEXT)</em> if  <em><a href="#item_is_random_text">is_random_text</a>(TEXT)</em>; otherwise (TEXT defines a  symbolic name or
 number) return TEXT.</p>
 </dd>
 </li>
@@ -1745,7 +1745,7 @@ example,</p>
 
 <dd>
 <p>Forks a process  and waits for completion.   The function will extract the  exit-code, test whether
-the process  died and  prints status messages  on <em>STDERR</em>.   <em>fork_and_wait</em> hence is  a handy
+the  process died  and prints  status messages  on <em>STDERR</em>.   <em>fork_and_wait</em> hence  is  a handy
 wrapper around the built-in <em>system</em> and <em>exec</em> functions.  Returns an array of three values:</p>
 </dd>
 <dd>
@@ -2387,41 +2387,53 @@ and   <em><a href="#item_write_string">write_string</a></em>.    We  will   disc
 <em><a href="#item_compile_perl">compile_Perl</a></em>  transliterate  typeglobs  and  typeglob-refs  into <code>&quot;?GLOB?&quot;</code>.   This  is  an
 attempted explanation.</p>
 <p><strong>TYPEGLOBS ARE A PERL IDIOSYNCRACY</strong></p>
-<p>Perl uses  a symbol table  per package to  map symbolic names like  <em>x</em> to Perl  values.  Typeglob
-objects are complete symbol  table entries.  The symbol table hash (<em>stash</em>)  is an ordinary hash,
-named like the  package with two colons appended.   The main symbol table's name  is <em>%main::</em>, or
-<em>%::</em>.   In the C  implementation of  the Perl  interpreter, the  main symbol  is simply  a global
-variable, informally called the <em>defstash</em> (default  stash).  The symbol <em>Data::</em> in stash <em>%::</em>
-addresses the stash of package <em>Data</em>, and the symbol <em>Rlist::</em> in the stash <em>%Data::</em> addresses
-the stash of package <em>Data::Rlist</em>.</p>
+<p>Perl uses a symbol table per package to map symbolic names like <em>x</em> to Perl values.  Typeglob (aka
+glob) objects are complete symbol table entries,  as hash values.  The symbol table hash (<em>stash</em>)
+is an  ordinary hash, named like  the package with two  colons appended.  In the  package stash the
+symbol name is mapped to a memory address which  holds the actual data of your program.  In Perl we
+do not  have real  global values, only  package globals.  Any  Perl code  is always running  in one
+package or another.</p>
+<p>The  main symbol  table's name  is <em>%main::</em>,  or <em>%::</em>.   In the  C implementation  of  the Perl
+interpreter, the main  symbol is simply a global variable, called  the <em>defstash</em> (default stash).
+The  symbol <em>Data::</em>  in stash  <em>%::</em> addresses  the  stash of  package <em>Data</em>,  and the  symbol
+<em>Rlist::</em> in the stash <em>%::Data::</em> addresses the stash of package <em>Data::Rlist</em>.</p>
 <p>Typeglobs are  an idiosyncracy  of Perl: different  types need  only one stash  entry, so  that one
 symbol can name all  types of Perl data (scalars, arrays, hashes)  and nondata (functions, formats,
-I/O handles).   The symbol <em>x</em>  is mapped to  the typeglob <em>*x</em>,  and therein coexist  <em>$x</em> (the
-scalar value), <em>@x</em> (the list value), <em>%x</em> (the hash value), <em>&amp;x</em> (the code value) and <em>x</em> (the
-I/O handle or the format specifier).</p>
+I/O handles).  The symbol <em>x</em> is mapped to the typeglob <em>*x</em>.  In the typeglob coexist the scalar
+<em>$x</em>, the list <em>@x</em>, the hash <em>%x</em>, the code <em>&amp;x</em> and the I/O-handle or format specifieer <em>x</em>.</p>
+<p>Most  of the  time only  one glob  slot is  used.  Do  typeglobs waste  space then?   Probably not.
+(Although some  authors believe that.)  Other script  languages like (e.g.)  Python  is not forcing
+decoration characters  -- the  interpreter already  knows the type.   In terms  of C,  symbol table
+entries are then  struct/union-combinations with a type field, a <em>double</em>  field, a <em>char*</em> field
+and so forth.   Perl symbols follow a contrary  design: globs are really pointer  sets to low-level
+structs that hold numbers, strings etc.  Naturally pointers to non-existing values are NULL, and so
+no type  field is required.   Perl interpreters can  now implement fine-grained  smart-pointers for
+reference-counting and copy-on-write, and must  not necessarily handle abstract unions.  In theory,
+the garbage-collector  should have ``increased recycling  opportunities.''  We do  know, for example,
+that <em>perl</em> is very greedy with RAM: it almost never returns any memory to the operating system.</p>
 <p>Modifying <em>$x</em>  in a Perl  program won't  change <em>%x</em>, because  the typeglob <em>*x</em>  is interposed
 between the stash and  the program's actual values for <em>$x</em>, <em>@x</em> etc.   The sigil <em>*</em> serves as
 wildcard for the other sigils <em>%</em>, <em>@</em>, <em>$</em> and <em>&amp;</em>. (Hint: a <em>sigil</em> is a symbol ``created for
 a specific magical purpose''; the name derives  from the latin <em>sigilum</em> = seal.)</p>
 <p>Typeglobs cannot be dissolved  by <em><a href="#item_compile">compile</a></em>, because when (e.g.)  <em>$x</em> and  <em>%x</em> are in use,
-<em>*x</em> does not return something useful like</p>
+the glob <em>*x</em> does not return some useful value like</p>
 <pre>
     (SCALAR =&gt; \$x, HASH =&gt; \@x)</pre>
-<p>Instead it plays the ball back:</p>
+<p>Typeglobs  are  also  not  interpolated  in  strings.   <em>perl</em> always  plays  the  ball  back.   A
+typeglob-value is simply a string:</p>
 <pre>
-    $ perl -e 'print *x'
+    $ perl -e '$x=1; @x=(1); print *x'
     *main::x</pre>
-<p>Typeglobs are also not interpolated in strings:</p>
 <pre>
     $ perl -e 'print &quot;*x is not interpolated&quot;'
     *x is not interpolated</pre>
 <pre>
-    $ perl -e 'print &quot;although &quot;.*x.&quot; could be a string&quot;'
+    $ perl -e '$x = &quot;this&quot;; print &quot;although &quot;.*x.&quot; could be a string&quot;'
     although *main::x could be a string</pre>
-<p>Typeglobs (stash entries) are arranged by <em>perl</em> on the fly, even with the <em>use strict</em> pragma in
-effect:</p>
+<p>As one  can see, even when only  <em>$x</em> is defined the  <em>*x</em> does not return  its value.  Typeglobs
+(stash entries) are arranged by <em>perl</em> on the fly, even with the <em>use strict</em> pragma in effect:</p>
 <pre>
-    $ perl -e 'package nirvana; use strict; print *x;'
+    $ perl -e 'package nirvana; use strict; print *x'
     *nirvana::x</pre>
 <p>Each  typeglob is  a full  path into  the <em>perl</em>  stashes, down  from the  <em>defstash</em>:</p>
 <pre>
@@ -2431,8 +2443,8 @@ effect:</p>
     $ perl -e 'package nirvana; sub f { local *g=shift; print *g.&quot;=$g&quot; }; package main; $x=42; nirvana::f(*x)'
     *main::x=42</pre>
 <p><strong>GLOB-REFS</strong></p>
-<p>In the  C implementation of  Perl typeglobs have  the type <em>GV</em> for  ``Glob value''.  Each  <em>GV</em> is
-merely a  set of  pointers to sub-objects  for scalars,  arrays, hashes etc.   In Perl  the special
+<p>In the C implementation of Perl, typeglobs have the struct-type <em>GV</em> for ``Glob value''.  Each <em>GV</em>
+is merely a  set of pointers to sub-objects  for scalars, arrays, hashes etc.  In  Perl the special
 syntax <em>*x{ARRAY}</em>  accesses the  array-sub-object, and is  another way  to say <em>\@x</em>.   But when
 applied to  a typeglob as <em>\*foo</em>  it returns a typeglob-ref,  or globref.  So  the Perl backslash
 operator <code>\</code> works like the address-of operator <code>&amp;</code> in C.</p>
@@ -2445,17 +2457,17 @@ operator <code>\</code> works like the address-of operator <code>&amp;</code> in
 <pre>
     $ perl -e 'print \*::'
     GLOB(0x10010f08)            # some globref</pre>
-<p>In Perl4 you had to pass typeglob-refs  to pass references to functions (the backslash-operator was
-not  yet ``invented'').   Since  Perl5 saw  the  light of  day, typeglob-refs  can  be considered  as
-artefacts.  Note, however, that these artefacts are still faster than true references, because true
-references are themselves stored  in a typeglob (as REF type) and so  need to be dereferenced.  For
-example, when we  assign the scalar reference <em>\$x</em>  to <em>*x</em>, the typeglob will digest  it as REF
-attribute:</p>
+<p>Little do we know what happens inside <em>perl</em>, when we assign REFs to typeglobs:</p>
 <pre>
     $ perl -e '$x = 42; *x = \$x; print $x'
+    42
+    $ perl -e '$y = 42; *x = \$y; print $x'
     42</pre>
-<p>Typeglob-refs in contrast can  be used directly by the interpreter (they  are raw <em>GV</em>-pointers in
-the Perl interpreter).  For example:</p>
+<p>In Perl4 you had to pass typeglob-refs  to call functions by references (the backslash-operator was
+not  yet ``invented'').   Since  Perl5 saw  the  light of  day, typeglob-refs  can  be considered  as
+artefacts.  Note, however, that these veterans  are still faster than true references, because true
+references  are themselves stored  in a  typeglob (as  REF type)  and so  need to  be dereferenced.
+Globrefs can be used directly (as <em>GV*</em>'s) by <em>perl</em>.  For example,</p>
 <pre>
     void f1 { my $bar = shift; ++$$bar }
     void f2 { local *bar = shift; ++$bar }</pre>
@@ -2470,22 +2482,37 @@ This means  that when  you declare <em>sub&nbsp;&nbsp;x&nbsp;{}</em> after  cast
 removed from the stash.   One way is to say <em>local *bar</em>, wich  temporarily assigns a new typeglob
 to <em>bar</em> with all pointers zeroized:</p>
 <pre>
-    void f { local *bar; ... }</pre>
-<p>The <em>local</em>-statement will put  the <em>bar</em> symbol into the package stash,  i.e., the same stash in
-which <em>f</em> exists.</p>
+    package nirvana;</pre>
+<pre>
+    sub f { print $bar; }
+    sub g { local *bar; $bar = 42; f(); }</pre>
+<pre>
+    package main;</pre>
+<pre>
+    nirvana::g();</pre>
+<p>Running this code as  Perl script prints the number assigned in <em>g</em>.  <em>f</em>  acts as a closure. The
+<em>local</em>-statement will  put the  <em>bar</em> symbol temporarily  into the package  stash <em>%::nirvana</em>,
+i.e., the same stash in which <em>f</em> and <em>g</em> exist.  It will remove <em>bar</em> when <em>g</em> returns.</p>
 <p><strong>*foo{THINGS}s</strong></p>
-<p>The <em>*x{NAME}</em>  expression family is fondly  called ``the <em>*foo{THING}</em> syntax'':</p>
+<p>The <em>*x{NAME}</em> expression family is fondly called ``the <em>*foo{THING}</em> syntax'':</p>
 <pre>
     $scalarref = *x{SCALAR};
     $arrayref  = *ARGV{ARRAY};
     $hashref   = *ENV{HASH};
-    $coderef   = *handlers{CODE};
+    $coderef   = *handlers{CODE};</pre>
+<pre>
     $ioref     = *STDIN{IO};
-    $ioref     = *STDIN{FILEHANDLE};    # dto.
+    $ioref     = *STDIN{FILEHANDLE};    # same as *STDIN{IO}</pre>
+<pre>
     $globref   = *x{GLOB};
-    $globref   = \*x;                   # dto.</pre>
-<p>When  Perl THINGs  are accessed  this way  few rules  apply.  Firstofall,  <em>*foo{THING}s</em>  are not
-hashes. The syntax is a stopgap:</p>
+    $globref   = \*x;                   # same as *x{GLOB}
+    $undef     = *x{THIS_NAME_IS_NOT_SUPPORTED} # yields undef</pre>
+<pre>
+    die unless defined *x{SCALAR};      # ok -&gt; will not die
+    die unless defined *x{GLOB};        # ok
+    die unless defined *x{HASH};        # error -&gt; will die</pre>
+<p>When THINGs are accessed this way few rules apply.  Firstofall, <em>*foo{THING}s</em> are not hashes. The
+syntax is a stopgap:</p>
 <pre>
     $ perl -e 'print \*x, *x{GLOB}, \*x{GLOB}'
     GLOB(0x100110b8)GLOB(0x100110b8)REF(0x1002e944)</pre>
@@ -2501,17 +2528,22 @@ returns an anonymous scalar-reference:</p>
     SCALAR(0x1002e94c)</pre>
 <p>In Perl5 it is still not possible to  get a reference to an I/O-handle (file-, directory- or socket
 handle) using  the backslash operator.  When a  function requires an I/O-handle  you must therefore
-pass a globref.   For new Perl programmers the syntax  is obscure, since it is  possible to pass an
-<em>IO::Handle</em>-reference, a typeglob or a typeglob-ref as the filehandle.</p>
+pass a globref.  More precisely, it is possible to pass an <em>IO::Handle</em>-reference, a typeglob or a
+typeglob-ref as the filehandle.  This is obscure bot only for new Perl programmers.</p>
 <pre>
     sub logprint($@) {
         my $fh = shift;
         print $fh map { &quot;$_\n&quot; } @_;
     }</pre>
 <pre>
-    logprint(*STDOUT{IO}, 'fee');   # pass IO-handle
-    logprint(*STDOUT    , 'fie');   # dto., pass typeglob
-    logprint(\*STDOUT   , 'foo');   # dto., pass typeglob-ref</pre>
+    logprint(*STDOUT{IO}, 'foo');   # pass IO-handle -&gt; IO::Handle=IO(0x10011b44)
+    logprint(*STDOUT, 'bar');       # ok, pass typeglob-value -&gt; '*main::STDOUT'
+    logprint(\*STDOUT, 'bar');      # ok, pass typeglob-ref -&gt; 'GLOB(0x10011b2c)'
+    logprint(\*STDOUT{IO}, 'nope'); # ERROR -&gt; won't accept 'REF(0x10010fe0)'</pre>
+<p>It is very amusing that Perl, although refactoring  UNIX in form of a language, does not make clear
+what a file-  or socket-handle is.  The  global symbol STDOUT is actually  an <em>IO::Handle</em> object,
+which <em>perl</em>  had silently  instantiated.  To functions  like <em>print</em>,  however, you may  pass an
+<em>IO::Handle</em>, globname or globref.</p>
 <p><strong>VIOLATING STASHES</strong></p>
 <p>As we saw we can access the Perl guts without using a scalpel.  Suprisingly, it is also possible to
 touch the stashes themselves:</p>
@@ -2521,9 +2553,9 @@ touch the stashes themselves:</p>
 <pre>
     $ perl -e '$x = 42; *x = $x; print *42'
     *main::42</pre>
-<p>By assigning  the scalar value  <em>$x</em> to  <em>*x</em> we have  effectively demolished the  stash: neither
-<em>$42</em> nor  <em>$main::42</em> are accessible. Symbols  like <em>42</em> are  invalid, because 42 is  a numeric
-literal, not a string literal.</p>
+<p>By assigning the scalar value <em>$x</em> to <em>*x</em> we have demolished the stash (at least, logically):
+neither <em>$42</em> nor <em>$main::42</em> are accessible.  Symbols like <em>42</em> are invalid, because 42 is a
+numeric literal, not a string literal.</p>
 <pre>
     $ perl -e '$x = 42; *x = $x; print $main::42'</pre>
 <p>Nevertheless it is easy to confuse <em>perl</em> this way:</p>
@@ -2537,6 +2569,9 @@ literal, not a string literal.</p>
     $ perl -e 'print *9'
     *main::9</pre>
 <pre>
+    $ perl -e 'print *42{GLOB}'
+    GLOB(0x100110b8)</pre>
+<pre>
     $ perl -e '*x = 42; print $::{42}, *x'
     *main::42*main::42</pre>
 <pre>
@@ -2545,8 +2580,8 @@ literal, not a string literal.</p>
     (with 8 registered patches, see perl -V for more detail)</pre>
 <p>Of course these  behaviors are not reliable, and  may disappear in future versions  of <em>perl</em>.  In
 German  you  say   ``Schmutzeffekt''  (dirt  effect)  for  certain   mechanical  effects  that  occur
-non-intendedly  because machines  and electrical  circuits  are not  perfect, and  so is  software.
-However, ``Schmutzeffekts'' are neither bugs nor features, but phenomenons.</p>
+non-intendedly,  because machines  and electrical  circuits are  not perfect,  and so  is software.
+However, ``Schmutzeffekts'' are neither bugs nor features; these are phenomenons.</p>
 <p><strong>LEXICAL VARIABLES</strong></p>
 <p>Lexical variables (<em>my</em> variables) are not stored in stashes, and do not require typeglobs.  These
 variables are stored in a special array, the <em>scratchpad</em>, assigned to each block, subroutine, and
@@ -2555,7 +2590,7 @@ occupies a  slot in the scratchpad;  hence is addressed by  an integer index, no
 variables are like <em>auto</em> variables in C.  They're also faster than <em>local</em>s, because they can be
 allocated at compile time, not runtime. Therefore you cannot declare <em>*x</em> lexically:</p>
 <pre>
-    $ perl -e 'my(*x);'
+    $ perl -e 'my(*x)'
     Can't declare ref-to-glob cast in &quot;my&quot; at -e line 1, near &quot;);&quot;</pre>
 <p>Seel also the Perl man-pages <em>perlguts</em>, <em>perlref</em>, <em>perldsc</em> and <em>perllol</em>.</p>
 <p>
@@ -2572,7 +2607,8 @@ processable in constant time, with constant  memory requirements.  For example, 
 can be read from a C++ process which will not peak over 400-500 MB of process RAM.</p>
 <p>
 </p>
-<h3><a name="bugs">Bugs</a></h3>
+<hr />
+<h1><a name="bugs">BUGS</a></h1>
 <p>There are no known bugs, this package is stable.  Deficiencies and TODOs:</p>
 <ul>
 <li>

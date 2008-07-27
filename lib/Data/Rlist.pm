@@ -7,7 +7,7 @@ Data::Rlist - A lightweight data language for Perl and C++
 
 =cut
 
-# $Writestamp: 2008-07-24 16:41:53 eh2sper$
+# $Writestamp: 2008-07-27 21:19:43 andreas$
 # $Compile: perl -c Rlist.pm; pod2html --title="Random-Lists" Rlist.pm >../../Rlist.pm.html$
 # $Comp1le: podchecker Rlist.pm$
 
@@ -407,7 +407,7 @@ my(%Rules, @VStk, @NStk);
 use constant DEFAULT_VALUE => qq'""'; # default Rlist, the empty string
 
 BEGIN {
-    $VERSION = '1.43';
+    $VERSION = '1.44';
     $DEBUG = 0;
     @ISA = qw/Exporter/;
 
@@ -463,8 +463,7 @@ BEGIN {
     %PredefinedOptions =
     (
      default =>
-     {
-      # Warning: "code_refs" are disabled by default because compile_fast() (the default compile
+     {# Warning: "code_refs" are disabled by default because compile_fast() (the default compile
       # function) never calls subs.  Likewise the default "precision" must be undef!
       eol_space => "\n",
       bol_tabs => 1,
@@ -520,7 +519,7 @@ BEGIN {
     # Regular expressions for scalars
     #
     # $RESymbolHere shall be defined equal to the 'identifier' regex in 'rlist.l', to keep the
-    # C/C++ and Perl implementations be compatible.  See also the C++ function quote7() and the
+    # C/C++ and Perl implementations compatible.  See also the C++ function quote() and the
     # {identifier} rule in <rlist.l>
     #
     # In Perl regexes, by default the "^" character matches only the beginning of the string, the
@@ -1316,7 +1315,6 @@ sub read($;$$) {
     my($input, $fcmd, $fcmdargs) = @_;
 
     if (ref($input) eq __PACKAGE__) {
-        # $input is an object created by Data::Rlist::new
         $input->dock(sub {
                          unless ($fcmd) {
                              $fcmd = $input->get('-filter');
@@ -1351,7 +1349,6 @@ sub read_csv($;$$$) {
     my($input, $options, $fcmd, $fcmdargs) = @_;
 
     if (ref($input) eq __PACKAGE__) {
-        # $input is an object created by Data::Rlist::new
         $input->dock
         (sub {
              $options ||= $input->get('options');
@@ -1361,10 +1358,10 @@ sub read_csv($;$$$) {
              Data::Rlist::read_csv($input, $options, $fcmd, $fcmdargs);
          });
     } else {
-        # $input is either a scalar or string-reference: we'll read linewise from a file or a
-        # string now.  In case $input is a reference (string) open_input() does not call
-        # read_csv(), but splits at LF or CR+LF.  However, lexln() only chomps $/. Therefore we
-        # explicitly check for a trailing \r here.
+		# Call open_input, let lexln read all lines, call close_input.  $input names a file or a
+		# string-ref (buffer); from both we're reading linewise.  For strings open_input does not
+		# call read_csv, but splits at LF or CR+LF.  Since lexln only chomps $/ we explicitly check
+		# for a trailing \r here.
 
         return undef unless open_input($input, $fcmd, $fcmdargs);
         confess unless defined $Readstruct;
@@ -1372,8 +1369,8 @@ sub read_csv($;$$$) {
         my @L; push @L, $Ln while lexln();
         my @R; push @R, map { [ map { maybe_unquote7($_) } split_quoted($_, $delim) ] }
         grep { not /^\s*#|^\s*$/o } # throw away comment lines and blank lines
-        #map { s/\r+$//o; $_ }      # strip trailing \r
-        @L;
+        #map { s/\r+$//o; $_ }		# strip trailing \r
+		@L;
         close_input();
         return \@R;
     }
@@ -1406,7 +1403,7 @@ sub result(;$) {
 sub nanoscripts(;$) {
     return unless defined wantarray;
     my $self = shift;
-	my $ls = $self ? $self->get(-nanoscripts=>) : \@NStk;
+    my $ls = $self ? $self->get(-nanoscripts=>) : \@NStk;
     return wantarray ? @$ls : $ls;
 }
 
@@ -1516,14 +1513,11 @@ sub write($;$$$)
     local $| = 1 if $DEBUG;
 
     if (ref($data) eq __PACKAGE__) {
-        # $data was created by Data::Rlist->new.
-        $data->dock
-        (sub {
-             $output ||= $data->get('-output');
-             $options ||= $data->get('-options');
-             $header ||= $data->get('-header');
-             Data::Rlist::write($data->get('-data'), $output, $options, $header);
-         });
+        $data->dock(sub {
+						$output ||= $data->get('-output');
+						$options ||= $data->get('-options');
+						$header ||= $data->get('-header');
+						Data::Rlist::write($data->get('-data'), $output, $options, $header) });
     } else {
         # $data is any Perl data or undef.  Reset package globals, validate $options, then compile
         # $data.
@@ -1544,11 +1538,9 @@ sub write($;$$$)
         }
 
         unless ($to_string) {
-            # Compile $data into a file named $output.
-            #
-            # Create new file and exclusively lock it. It is guaranteed that no other process will
-            # be able to run flock(FH,2) on the same file while you hold the lock. (Because the OS
-            # suspends and blocks other processes.)
+            # Compile $data into a file named $output.  Create a new file, exclusively lock it. It
+            # is guaranteed that no other process will be able to run flock(FH,2) on the same file
+            # while we hold the lock. (Because the OS suspends and blocks other processes.)
 
             confess $output if not defined $output or ref $output; # or not_valid_pathname($output)
             my($to_stdout, $fh) = $output eq '-';
@@ -1559,8 +1551,7 @@ sub write($;$$$)
                 confess("\nERROR: $output: can't create and lock Rlist-file: $!");
             }
 
-            # Build file header.  Compile $data to file $fh.  Then returns undef.  The eval traps
-            # die exceptions.
+            # Build file header.  Compile $data to file $fh, return undef.  
 
             my $host = eval { use Sys::Hostname; hostname; } || 'some unknown machine';
             my $uid = getlogin || getpwuid($<);
@@ -1583,19 +1574,14 @@ sub write($;$$$)
             unless ($fast || $perl) {
                 $result = 1 if compile($data, $options, $fh);
             } else {
-                # Note that compile_fast() and compile_Perl() both return a reference to
-                # $Data::Rlist::R.
+                # Note that we return $Data::Rlist::R here.
                 $result = 1;
                 print $fh ${compile_fast($data)}.$eol if $fast;
                 print $fh ${compile_Perl($data)}.$eol if $perl;
             } close $fh;
         } else {
-            # Compile $data into string and return a reference to it.
-            #
-            # At this point $output has to be undef or a string-reference.  In case of the latter a
-            # reference to the compiled Rlist is not only returned, but also its value is copied to
-            # the string referred to by output.
-
+            # Compile $data into string and return a reference.  Here $output has to be undef or a
+            # string-ref (buffer).
             confess $output unless not defined $output or ref $output eq 'SCALAR';
             unless ($fast || $perl) {
                 $result = compile($data, $options);
@@ -1603,8 +1589,7 @@ sub write($;$$$)
             } else {
                 $result = compile_fast($data) if $fast;
                 $result = compile_Perl($data) if $perl;
-                $$output = $$result if ref $output; # we have to copy, since $result refers to
-                                                    # $Data::Rlist::R
+                $$output = $$result if ref $output; # copy it -> $result is $Data::Rlist::R
             }
         } return $result;
     }
@@ -1618,22 +1603,19 @@ sub write_csv($;$$$$)
     return 0 unless defined $data;
 
     if (ref($data) eq __PACKAGE__) {
-        # $data was created by Data::Rlist->new.
-        $data->dock
-        (sub {
-             $output ||= $data->get('-output');
-             $options ||= $data->get('-options');
-             $columns ||= $data->get('-columns');
-             $header ||= $data->get('-header');
-             Data::Rlist::write_csv($data->get('-data'), $output, $options, $columns, $header);
-         });
+        $data->dock(sub {
+						$output ||= $data->get('-output');
+						$options ||= $data->get('-options');
+						$columns ||= $data->get('-columns');
+						$header ||= $data->get('-header');
+						Data::Rlist::write_csv($data->get('-data'), $output, $options, $columns, $header) });
     } else {
-        # $data is any Perl data or undef.  In case of undef returns 0.  When the file could not be
-        # created, dies. Otherwise returns 1.
+        # $data is anything.  In case of undef returns 0.  When the file could not be created,
+        # dies. Otherwise returns 1.
         #
-        # Unless a value looks like a number the value is quote7()d.  read_csv() uses split_quoted()
-        # which keeps quotes and backslashes, then maybe_unquote7()s each value.  Note that quoting
-        # is generally necessary, because strings could also contain commas.
+        # Unless a value looks like a number the value is quoted (strings may have commas).
+        # read_csv uses split_quoted which keeps quotes and backslashes, then maybe_unquote7()s
+        # each value.
 
         $options = complete_options($options, 'default');
         my $to_string = ref $output || not defined $output;
@@ -1663,7 +1645,6 @@ sub write_csv($;$$$$)
                 (open($fh, ">$output") and flock($fh, 2)) or
                 confess("\nERROR: $output: can't create and lock CSV-file: $!");
             }
-            # TODO: write $header
             print $fh $result;
             close $fh; 1
         }
@@ -1684,10 +1665,6 @@ sub write_string($;$) {
     my($data, $options) = (shift, shift||'string');
     my $strref;
     if (ref($data) eq __PACKAGE__) {
-        # When $data was created by Data::Rlist->new defuses a possible -output attribute.  Passing
-        # some \$str argument for OUTPUT to write() means to copy the compiled Rlist redundantly to
-        # $str.
-
         my $out = $data->get('output');
         $data->set(-output => undef);
         $strref = Data::Rlist::write($data, undef, $options);
@@ -1721,7 +1698,7 @@ sub keelhaul($;$) {
 
 =item F<close_input>
 
-Open/close  Rlist text  file or  string INPUT  for parsing.  Used internally  by  F<L</read>> and
+Open/close  Rlist text  file  or string  INPUT for  parsing.   Used internally  by F<L</read>>  and
 F<L</read_csv>>.
 
 B<PREPROCESSING>
@@ -1752,7 +1729,7 @@ B<SAFE CPP MODE>
 
 This mode uses F<sed> and a  temporary file.  It is enabled by setting F<$Data::Rlist::SafeCppMode>
 to 1  (the default is  0).  It  protects single-line F<#>-comments  when FILTER begins  with either
-F<gcc>, F<g++> or  F<cpp>.  F<L</open_input>> then additionally runs F<sed>  to convert all input
+F<gcc>, F<g++>  or F<cpp>.  F<L</open_input>>  then additionally runs  F<sed> to convert  all input
 lines beginning  with whitespace plus the  F<#> character.  Only the  following F<cpp>-commands are
 excluded, and only when they appear in column 1:
 
@@ -1784,55 +1761,42 @@ sub open_input($;$$)
     if (defined $input) {
         $Readstruct = { };
         unless (ref $input) {
-            # Input is a filename, not a string reference.
             $Readstruct->{filename} = $input;
-
-            unless ($fcmd) {
-                # Normal mode. No filter-command for input file.  The file is read directly
-                # (unfiltered), and the input file will be locked.
-
+            unless ($fcmd) {	# the file is read unfiltered
                 unless (open($Readstruct->{fh}, "<$input") && flock($Readstruct->{fh}, 1)) {
-                    # This may not be the end of this script! The caller could have trapped the die
-                    # exception in an eval; hence we've to be tidy.
-
                     $Readstruct = undef;
                     pr1nt('ERROR', "input file '$input'", $!);
                 }
-            } else {
+            } else {			# pipe it through $fcmt
                 $fcmd = "gcc -E -Wp,-C -x c++" if $fcmd == 1;
                 $fcmd = "$fcmd $fcmdargs" if $fcmdargs;
 
                 if ($SafeCppMode) {
                     if ($fcmd =~ /^(gcc|g\+\+|cpp)/i) {
-                        # Safe cpp mode. Filter input with sed:
+                        # Filter input with sed:
                         #
                         # (1) Because known #-commands must start at column 1 we first escape all
                         #     indented '#'s into '##'s:
                         #           "(^ +)#" -> '$1\#'
-                        #
                         # (2) Next we prefix the known commands with a blank, e.g.
                         #           "#if 0" -> " #if 0"
-                        #
                         # (3) Finally we escape all unknown #-commands at column 1:
                         #           "^#" -> "\#"
                         #
-                        # The lexln() function then converts escape #s in the preprocessed file
-                        # back:
-                        #
-                        #           "(^ *)\#" -> "$1#"
-                        #
-                        # The above regexes are in perl (not sed) syntax.  This output is then
-                        # preprocessed.  Since the builtin open() does not support true pipes a
-                        # temporary file receives the output of sed.
+                        # lexln will then reverse the escaping.  Since the builtin open does not
+                        # support true pipes, a temporary file receives the output of sed, which is
+                        # then preprocessed. The temporary file will be removed in close_input.
 
                         my($sedfh, $tmpfh);
                         open($sedfh,
-                             "sed '".join('; ', ("s/^\\([ \t][ \t]*\\)#/\\1\\\\#/", # many seds don't recognize \t; hence insert literally
-                                                 "s/^#\\(include\\|pragma\\|if\\|ifdef\\|else\\|endif\\|define\\|undef\\)/ #\\1/",
-                                                 "s/^#/\\\\#/")).";' <$input 2>nul |") || die "\nERROR: input file '$fcmd': $!";
+							 "sed '".
+							 join('; ', ("s/^\\([ \t][ \t]*\\)#/\\1\\\\#/", # many seds don't know \t -> insert literally
+										 "s/^#\\(include\\|pragma\\|if\\|ifdef\\|else\\|endif\\|define\\|undef\\)/ #\\1/",
+										 "s/^#/\\\\#/")).";' <$input 2>nul |") ||
+										 die "\nERROR: input file '$fcmd': $!";
                         my($tmpinput, $i) = (undef, 0);
                         do { $tmpinput = $input.'.tmp'.$i++ } while -e $tmpinput;
-                        $Readstruct->{tmpfile} = $input = $tmpinput; # will be removed in close_input()
+                        $Readstruct->{tmpfile} = $input = $tmpinput;
                         open ($tmpfh, ">$input") || die "\nERROR: temporary file '$input': $!";
                         print $tmpfh readline($sedfh);
                         close $tmpfh;
@@ -1840,7 +1804,7 @@ sub open_input($;$$)
                     }
                 }
 
-                # Open the file $input for preprocessing.
+                # Open the file $input (or the temporary sed'd file) for preprocessing.
 
                 unless (open($Readstruct->{fh}, "$fcmd $input 2>nul |")) {
                     $Readstruct = undef;
@@ -1854,37 +1818,31 @@ sub open_input($;$$)
                 $Ln = '';
             }
         } else {
-            # Input is a string reference.  Split it into lines at LF or CR+LF. Note that it isn't
-            # necessary for the string to have newlines.
+            # Input is a string-ref.  It will be split into lines at LF or CR+LF.  But when it has
+            # no newlines it is read as one big line.
 
             carp "cannot preprocess strings" if $fcmd;
-
-            # Don't use split_quoted because the input string is arbitary.
-
             $LnArray = [ split /\r*\n/, $$input ];
             $Ln = '';
         }
-    }
-    $Readstruct
+    } $Readstruct
 }
 
 sub close_input()
 {
-    if ($Readstruct->{fh}) {
-        close($Readstruct->{fh});
-    }
+	close($Readstruct->{fh}) if $Readstruct->{fh};
     if ($Readstruct->{tmpfile}) {
         unlink($Readstruct->{tmpfile}) ||
         croak "\nERROR: could not temporary file '$Readstruct->{tmpfile}': $!";
     }
-    $LnArray = $Ln = $Readstruct = undef
+    $LnArray = $Ln = $Readstruct = undef;
 }
 
 =item F<lex()>
 
-Lexical scanner.  Called  by F<L</parse>> to split the current line  into tokens.  F<lex> reads
-F<#>  or  F<//>  single-line-comment  and  F</* */>  multi-line-comment  as  regular  white-spaces.
-Otherwise it returns tokens according to the following table:
+Lexical scanner.  Called by F<L</parse>> to split  the current line into tokens.  F<lex> reads F<#>
+or F<//> single-line-comment and F</* */> multi-line-comment as regular white-spaces.  Otherwise it
+returns tokens according to the following table:
 
     RESULT      MEANING
     ------      -------
@@ -1919,21 +1877,21 @@ Return true if current input file/string is exhausted, false otherwise.
 =item F<parse()>
 
 Read Rlist language productions from current input.  This is a fast, non-recursive parser driven by
-the parser map F<%Data::Rlist::Rules>, and fed by F<L</lex>>.  It is called internally by
-F<L</read>>.  F<parse> returns an array- or hash-reference, or F<undef> in case of parsing
+the  parser  map  F<%Data::Rlist::Rules>, and  fed  by  F<L</lex>>.   It  is called  internally  by
+F<L</read>>.   F<parse>  returns an  array-  or  hash-reference, or  F<undef>  in  case of  parsing
 F<L</errors>>.
 
 =cut
 
-# Local variables of lex(). Lexical variables are initialized at compile time, hence they're
-# available in INIT.
+# Local variables for lex(). Note that since lexical variables are init'd at compile-time, they're
+# available in BEGIN blocks.
 
-my $C1;
 my $RELexNumber = qr/^($REFloatHere)/;  # number constant
 my $RELexSymbol = qr/^($RESymbolHere)/; # symbolic name without quotes
 my $RELexQuotedString = qr/^\"((?:\\[nrbftv\"\'\\]|\\[0-7]{3}|[^\"])*)\"/; # quoted string constant
 my $RELexQuotedSymbol = qr/^"($RESymbolHere)"/; # symbolic name in quotes
 my $RELexPunctuation = qr/^[$REPunctuationCharacter]/;
+my $C1;
 
 BEGIN {
     $REIsPunct[$_] = 0 foreach  0..255;
@@ -1957,7 +1915,7 @@ sub lex()
     #
     # The Perl \s regex matches  [ \t\n\r\f], but
     #   ($C1 <= 32 && ($C1 == 32 || $C1 == 9 || $C1 == 10 || $C1 == 13 || $C1 == 12))
-    # is more efficient.  However, to make it even faster we use simply
+    # is still more efficient.  However, to make it even faster we use
     #   ($C1 <= 32)
 
     unless (defined $Ln) {
@@ -2109,7 +2067,7 @@ sub at_eof() {
 }
 
 sub lexln() {
-    # Called from lex() to parse Rlist files, and from read_csv().
+    # Called from lex to parse Rlist files, and from read_csv.
 
     if ($ReadFh && !eof($ReadFh)) { # eof(undef) and eof(0) are 1
         $Ln = readline($ReadFh); chomp $Ln; # strips $/
@@ -2132,14 +2090,11 @@ sub parse()
     @Messages = @VStk = @NStk = ();
 
     while (defined($t = lex())) {
-        # Push new token to the queue, then reduce as many rules as possible from the tail of the
-        # queue. First tries to match long rules. After reducing the queue as far as possible fetch
-        # more tokens towards EOF.
-        #
-        # Note that the constants 2 and 4 are the min./max. lengths of rules in %Rules. When $l
-        # (the current length of $m) is <2 no rule can be matched.
+        # Push new token, then reduce as many rules as possible from the tail of the queue before
+        # fetching more tokens.  Longer rules are matched first.  The constants 2 and 4 are the
+        # min./max. lengths of rules in %Rules. When $l (the current length of $m) is <2 no rule
+        # can be matched.
 
-        #if (!$DEBUG) {
         if (1) {
             $q .= $t;
             while (($l = length($q)) >= 2) {
@@ -2152,19 +2107,16 @@ sub parse()
                 } else { last }   # fetch another token
             }                     # match another rule
         } else {
-            # The above loop is ca. 10% faster than the second, so this one is disabled (however,
-            # it is working).  The if(1/0) blocks are expected to be neutralized by the
-            # byte-compiler.
+            # The above loop is ca. 10% faster than the second, so this one is disabled (although
+            # working).  We expect the if(1/0) blocks to be neutralized by the byte-compiler.
 
             $l = length($q .= $t);
             while ($l >= 2) {
                 $l = 4 if $l > 4;
                 $m = substr($q, -$l);
 
-                while (1) {
-                    # TODO: last if $m begins with [=,;})]
-                    if ($Rules{$m}) {
-                        # Can reduce a rule $m.
+                while (1) {			  # TODO: last if $m begins with [=,;})]
+                    if ($Rules{$m}) { # can reduce a rule $m
                         printf STDERR "%20s\treducing  $m\n", $q if $DEBUG;
                         substr($q, -$l) = $Rules{$m}->();
                         $l = length $q; last;
@@ -2172,8 +2124,8 @@ sub parse()
                         # $m is not a matching rule.  Cut the first character from $m and try
                         # matching it.
                         #
-                        # Quickly removing the first character from a string is surprisingly
-                        # hard. All of the following work:
+                        # Note that to uickly remove the first character from a string is
+                        # surprisingly hard in Perl. All of the following work:
                         #
                         #   $m = unpack('x1A'.$l, $m)
                         #   $m = substr($m, 1)      # fastest
@@ -2183,50 +2135,46 @@ sub parse()
                         last if --$l < 2;
                         $m = substr($m, 1);
                     }
-                } last if $Errors; # stop if an error occured
+                } last if $Errors;
             }
         }
     }
 
-    # Parser finished.
-    if ($Errors) {
-        return undef;
-    } else {
-        # EOF reached, which means lex() had returned undef. The token queue has now been reduced
-        # to one token and @VStk only contains its value. The token 'h' (hash) or 'l'
-        # (list). Because of the parser map nature it could also be 'v' (value), in which case it
-        # shall decay into a hash or list.
+    # Parser has finished, EOF has been reached (lex had returned undef). The token queue has now
+	# been reduced to one token and @VStk only contains its value. The token 'h' (hash) or 'l'
+	# (list). Because of the parser map nature it could also be 'v' (value), in which case it shall
+	# decay into a hash or list.
 
-        print STDERR qq'Data::Rlist::parse() reached EOF with "$q"\n' if $DEBUG;
+    return undef if $Errors;
 
-        if (@VStk == 0) {
-            # Empty input or non-existing file.
-            croak STDERR "unexpected, supernumeray tokens after parsing:\n\t$q\n" if $DEBUG && $q;
-            $MissingInput = 1; return undef;
-        } else {
-            if (@VStk > 1) {
-                pr1nt('ERROR', qq'broken input', qq'expected "l" (list) or "h" (hash), not "$q"');
-                my @overproduced = map { ref($_) ? $_ : Data::Rlist::quote7($_) } @VStk;
-                for (my $i = 0; $i <= $#overproduced; ++$i) {
-                    warning(sprintf("cancelling overbilled value [%u] %s", $i, $overproduced[$i]));
-                }
-                print STDERR qq'Data::Rlist::parse() returns undef\n' if $DEBUG;
-                return undef;
-            } elsif (not defined $VStk[0]) {
-                confess         # dto.
-            } elsif ($q eq 'v') {
-                my $rtp = reftype $VStk[0]; # result type
-                unless (defined $rtp) {
-                    $VStk[0] = { $VStk[0] => undef } # not a reference - the input is just one scalar
-                } elsif ($rtp !~ /(?:HASH|ARRAY)/) {
-                    confess quote7($VStk[0]) # shall be an array/hash-reference
-                }
-            }
-        }
+	print STDERR qq'Data::Rlist::parse() reached EOF with "$q"\n' if $DEBUG;
+	if (@VStk == 0) {
+		croak STDERR "unexpected, supernumeray tokens after parsing:\n\t$q\n" if $DEBUG && $q;
+		$MissingInput = 1;		# empty input or non-existing file
+		return undef;
+	} else {
+		if (@VStk > 1) {
+			pr1nt('ERROR', qq'broken input', qq'expected "l" (list) or "h" (hash), not "$q"');
+			my @overproduced = map { ref($_) ? $_ : Data::Rlist::quote7($_) } @VStk;
+			for (my $i = 0; $i <= $#overproduced; ++$i) {
+				warning(sprintf("cancelling overbilled value [%u] %s", $i, $overproduced[$i]));
+			}
+			print STDERR qq'Data::Rlist::parse() returns undef\n' if $DEBUG;
+			return undef;
+		} elsif (not defined $VStk[0]) {
+			confess				# dto.
+		} elsif ($q eq 'v') {
+			my $rtp = reftype $VStk[0]; # result type
+			unless (defined $rtp) {
+				$VStk[0] = { $VStk[0] => undef } # not a reference -> the input is just one scalar
+			} elsif ($rtp !~ /(?:HASH|ARRAY)/) {
+				confess quote7($VStk[0]) # shall be an array/hash-reference
+			}
+		}
+	}
 
-        print STDERR "Data::Rlist::parse() returns $VStk[0]\n" if $DEBUG;
-        return pop @VStk;
-    }
+	print STDERR "Data::Rlist::parse() returns $VStk[0]\n" if $DEBUG;
+	return pop @VStk;
 }
 
 =item F<compile(DATA[, OPTIONS, FH])>
@@ -2337,7 +2285,7 @@ sub compval($) {
     #
     # TODO: to gain more speed, in compile create a specialized sub depending on globals
     # $Precision, $Here_docs.
-    #
+
     my $v = shift;
     if (defined $v) {
         if ($v !~ $REValue) {
@@ -2345,10 +2293,10 @@ sub compval($) {
             # here-doc.
             if ($Here_docs) {
                 if ($v =~ /\n.*\n\z/os) {
-                    # Here-docs enabled and $v qualifies.  Note that we want to write only strings
-                    # with at least two LFs as here-docs (although a final LF would be sufficient).
-                    # Now find a token that doesn't interfere with the text: try "___", "HERE",
-                    # "HERE0", "HERE1" etc.
+                    # Here-docs enabled and $v qualifies.  We can write only strings with at least
+                    # two LFs as here-docs (although a final LF would be sufficient).  Now find a
+                    # token that doesn't interfere with the text: "___", "HERE", "HERE0", "HERE1"
+                    # etc.
 
                     my @ln = split /\n/, $v;
                     my $tok = '___';
@@ -2480,7 +2428,7 @@ sub compile2($)
     # Compile Perl data structure $data into some Rlist and directly print into file handle $Fh (do
     # not compile a big string such as compile1() does).
     #
-    # WARNING: this shall be merely a copy of the compile1() code.
+    # WARNING: this must be merely a copy of the compile1() code.
 
     my $data = shift;
     my($inl, $k, $v);
@@ -2507,8 +2455,7 @@ sub compile2($)
                 }
                 print $Fh $Eol_space.$pref0.')';
                 print $Fh $Eol_space unless $Depth;
-            } else {
-                # Print all entries to one line.
+            } else {			# print all entries to one line
                 print $Fh '('.$Paren_space;
                 foreach $v (@$data) {
                     print $Fh $Comma_punct if $inl; $inl = 1;
@@ -2611,8 +2558,8 @@ sub compile_fast1($)
 
                 # Sorting is slightly slower than
                 #       while (($K, $V) = each %$data)
-                # but produces much nicer results.  Note also that calling is_random_text is
-                # generally faster than to quote always.
+                # but produces nicer results.  Note also that calling is_random_text is generally
+                # faster than to always quote.
 
                 $R.= "{\n";
                 foreach $K (sort keys %$data) {
@@ -2652,7 +2599,7 @@ sub compile_Perl($)
     my $data = shift;
     $R = ''; $Depth = -1;       # reset result string
     compile_Perl1($data);
-    return \$R; # reference to the package-variable $Data::Rlist::R
+    return \$R;
 }
 
 sub compile_Perl1($);
@@ -2737,14 +2684,14 @@ applies the compiled regex F<$Data::Rlist::REInteger>.
 
 =item F<is_number(SCALAR-REF)>
 
-Test for strings that look like numbers. F<is_number>  can be used to test whether a scalar looks
+Test for strings  that look like numbers. F<is_number>  can be used to test whether  a scalar looks
 like  a  integer/float  constant  (numeric  literal).   The function  applies  the  compiled  regex
 F<$Data::Rlist::REFloat>.  Note that it doesn't match
 
 - leading or trailing whitespace,
 
-- lexical conventions such as the C<"0b"> (binary), C<"0"> (octal), C<"0x"> (hex) prefix to denote a
-  number-base other than decimal, and
+- lexical conventions such as the C<"0b"> (binary), C<"0"> (octal), C<"0x"> (hex) prefix to denote
+  a number-base other than decimal, and
 
 - Perls' legible numbers, e.g. F<3.14_15_92>,
 
@@ -2756,8 +2703,8 @@ See also
 
 =item F<is_symbol(SCALAR-REF)>
 
-Test for symbolic names.  F<is_symbol> can be used to test whether a scalar looks like a symbolic
-name.  Such strings need not to be quoted.  Rlist defines symbolic names as a superset of C
+Test for symbolic names.   F<is_symbol> can be used to test whether a  scalar looks like a symbolic
+name.   Such strings  need not  to be  quoted.  Rlist  defines symbolic  names as  a superset  of C
 identifier names:
 
     [a-zA-Z_0-9]                    # C/C++ character set for identifiers
@@ -2767,7 +2714,7 @@ identifier names:
     [a-zA-Z_\-/\~:@][a-zA-Z_0-9\-/\~:\.@]*  # match Rlist symbolic name
 
 For example, names such as F<std::foo>, F<msg.warnings>, F<--verbose>, F<calculation-info> need not
-be  quoted. 
+be quoted.
 
 =item F<is_value(SCALAR-REF)>
 
@@ -2804,7 +2751,7 @@ Mittag\n\"">, while F<escape7> returns C<\"Fr\374her Mittag\n\">
 
 =item F<maybe_quote7(TEXT)>
 
-Return F<quote7(TEXT)> if F<L</is_random_text>(TEXT)>; otherwise (TEXT defines a symbolic name or
+Return F<quote7(TEXT)> if  F<L</is_random_text>(TEXT)>; otherwise (TEXT defines a  symbolic name or
 number) return TEXT.
 
 =item F<maybe_unquote7(TEXT)>
@@ -2837,14 +2784,15 @@ our(%g_nonprintables_escaped,   # keys are non-printable ASCII chars, values are
     $REescape_seq);
 
 BEGIN {
-    # Perl should not use/require the same module twice. However, the die exception below may fire
-    # in case Rlist.pm is symlinked.  For example, when Rlist.pm is installed locally to ~/bin and
-    # ~/bin is in @INC, one can say:
+    # Perl should not use/require the same module twice. However, the die below may throw when
+    # Rlist.pm is symlinked. (This is a mature package, and we experienced many scenarios with it
+    # so far.)  For example, when Rlist.pm is installed locally to ~/bin and ~/bin is in @INC, one
+    # can say
     #       use Rlist;
     # to read the package Data::Rlist.  But in order to
     #       use Data::Rlist;
     # as with the regularily installed version (from CPAN), one must create ~/bin/Data/Rlist.pm.
-    # If this is a symlink to ~/bin/Rlist.pm the same file might be used twice.
+    # If this is a symlink to ~/bin/Rlist.pm the same file might be used twice by perl.
 
     croak "${\(__FILE__)} used/required twice" if %g_escaped_nonprintables;
 
@@ -2859,10 +2807,9 @@ BEGIN {
     # which has now been optimized into
     #
     #   s/$REnonprintable/$g_nonprintables_escaped{$1}/go
-    #
 
     sub escape_char($) {
-        my $c = ord($_[0]); # get number code, eg. 'ü' => 252
+        my $c = ord($_[0]);						 # get number code, eg. 'ü' => 252
         '\\'.($c >> 6).(($c >> 3) & 7).($c & 7); # eg. 252 => \374
     }
 
@@ -2887,8 +2834,8 @@ BEGIN {
     croak join("  ", keys %g_escaped_nonprintables) unless keys(%g_escaped_nonprintables) == (255 - 95);
     #croak sort keys %g_escaped_nonprintables;
 
-    # Add \ " ' into the tables, which spares another s// call in escape and unescape for
-    # them. The leading \ is alredy matched by $REescape_seq.
+    # Add \ " ' into the tables, which spares another s// call in escape and unescape for them. The
+    # leading \ is alredy matched by $REescape_seq.
 
     $g_nonprintables_escaped{chr(34)} = qq(\\"); # " => \"
     $g_nonprintables_escaped{chr(39)} = qq(\\'); # ' => \'
@@ -2913,21 +2860,20 @@ BEGIN {
 sub maybe_quote7($) { is_random_text($_[0]) ? quote7($_[0]) : $_[0] }
 sub maybe_unquote7($) { ord($_[0]) == 34 ? unquote7($_[0]) : $_[0] }
 sub quote7($) {
-    # Escape, then add quotes (the below expression is faster than qq).
+    # Escape, then add quotes. Note that the below expression is faster than qq.
     '"'.escape7($_[0]).'"'
 }
 
 sub unquote7($) {
     # First remove quotes, then unescape. The below expression might look complicated; but it is
-    # actually faster than to shift the string from the stack, massage it with s/^\"// and s/\"$//.
-
+    # faster than to shift the string and apply s/^\"// and s/\"$// on it.
     unescape7(ord($_[0]) == 34 ? substr($_[0], 1, length($_[0]) - 2) : $_[0])
 }
 
 sub escape7($) {
     my $s = shift; return '' unless defined $s;
     $s =~ s/\\/\\\\/g;                                        # has to happen first, because...
-    $s =~ s/$REnonprintable/$g_nonprintables_escaped{$1}/gos; # ...will intersperse more backslashes
+    $s =~ s/$REnonprintable/$g_nonprintables_escaped{$1}/gos; # ...this will intersperse more backslashes
     $s
 }
 
@@ -2948,7 +2894,7 @@ sub unhere($;$$$) {
     }
     s/^\s*?$leader(?:$white)?//gm;
 
-    # Recipe 1.12
+    # This is recipe 1.12
     my($columns, $firsttab, $deftab) = (shift, shift||'', shift||'');
     if ($columns) {
         use Text::Wrap;
@@ -3244,8 +3190,7 @@ sub deep_compare($$;$$$)
     }
 
     # At this point $a and $b have equal types.
-    unless ($refs) {
-        # Compare numbers/strings.
+    unless ($refs) {			# compare numbers/strings
         if ($anm) {
             $prec = (defined $prec) ? " precision=$prec" : '';
             unless (equal($a, $b)) {
@@ -3258,16 +3203,13 @@ sub deep_compare($$;$$$)
         } elsif ($dump) {
             $match->()
         } return @R
-    } else {
-        # Deep-compare two references.
+    } else {					# deep-compare two references
         my $recurse = sub($$) { deep_compare($_[0], $_[1], $prec, $dump, $ind + 1) };
         prind($ind, $prefix->()) if $dump;
-        if ($atp eq 'SCALAR') {
-            # Two scalars refs.
+        if ($atp eq 'SCALAR') {	# two scalars refs
             push @R, $recurse->($$a, $$b);
             return @R
-        } elsif ($atp eq 'HASH') {
-            # Deep-compare two hashes.  First test number of key/value-pairs.
+        } elsif ($atp eq 'HASH') { # two hashes
             my $acnt = keys %$a;
             my $bcnt = keys %$b;
             unless ($acnt == $bcnt) {
@@ -3290,8 +3232,7 @@ sub deep_compare($$;$$$)
                 prind($ind, "key '$_'") if $dump;
                 push @R, $recurse->($a->{$_}, $b->{$_});
             }
-        } elsif ($atp eq 'ARRAY') {
-            # Deep-compare two arrays.
+        } elsif ($atp eq 'ARRAY') {	# two arrays
             if ($#$a != $#$b) {
                 $mismatch->("different array sizes: ${\(1+$#$a)} vs. ${\(1+$#$b)}")
             } else {
@@ -3312,7 +3253,7 @@ sub deep_compare($$;$$$)
 =item F<fork_and_wait(PROGRAM[, ARGS...])>
 
 Forks a process  and waits for completion.   The function will extract the  exit-code, test whether
-the process  died and  prints status messages  on F<STDERR>.   F<fork_and_wait> hence is  a handy
+the  process died  and prints  status messages  on F<STDERR>.   F<fork_and_wait> hence  is  a handy
 wrapper around the built-in F<system> and F<exec> functions.  Returns an array of three values:
 
     ($exit_code, $failed, $coredump)
@@ -4040,19 +3981,33 @@ attempted explanation.
 
 B<TYPEGLOBS ARE A PERL IDIOSYNCRACY>
 
-Perl uses  a symbol table  per package to  map symbolic names like  F<x> to Perl  values.  Typeglob
-objects are complete symbol  table entries.  The symbol table hash (F<stash>)  is an ordinary hash,
-named like the  package with two colons appended.   The main symbol table's name  is F<%main::>, or
-F<%::>.   In the C  implementation of  the Perl  interpreter, the  main symbol  is simply  a global
-variable, informally called the F<defstash> (default  stash).  The symbol F<Data::> in stash F<%::>
-addresses the stash of package F<Data>, and the symbol F<Rlist::> in the stash F<%Data::> addresses
-the stash of package F<Data::Rlist>.
+Perl uses a symbol table per package to map symbolic names like F<x> to Perl values.  Typeglob (aka
+glob) objects are complete symbol table entries,  as hash values.  The symbol table hash (F<stash>)
+is an  ordinary hash, named like  the package with two  colons appended.  In the  package stash the
+symbol name is mapped to a memory address which  holds the actual data of your program.  In Perl we
+do not  have real  global values, only  package globals.  Any  Perl code  is always running  in one
+package or another.
+
+The  main symbol  table's name  is F<%main::>,  or F<%::>.   In the  C implementation  of  the Perl
+interpreter, the main  symbol is simply a global variable, called  the F<defstash> (default stash).
+The  symbol F<Data::>  in stash  F<%::> addresses  the  stash of  package F<Data>,  and the  symbol
+F<Rlist::> in the stash F<%::Data::> addresses the stash of package F<Data::Rlist>.
 
 Typeglobs are  an idiosyncracy  of Perl: different  types need  only one stash  entry, so  that one
 symbol can name all  types of Perl data (scalars, arrays, hashes)  and nondata (functions, formats,
-I/O handles).   The symbol F<x>  is mapped to  the typeglob F<*x>,  and therein coexist  F<$x> (the
-scalar value), F<@x> (the list value), F<%x> (the hash value), F<&x> (the code value) and F<x> (the
-I/O handle or the format specifier).
+I/O handles).  The symbol F<x> is mapped to the typeglob F<*x>.  In the typeglob coexist the scalar
+F<$x>, the list F<@x>, the hash F<%x>, the code F<&x> and the I/O-handle or format specifieer F<x>.
+
+Most  of the  time only  one glob  slot is  used.  Do  typeglobs waste  space then?   Probably not.
+(Although some  authors believe that.)  Other script  languages like (e.g.)  Python  is not forcing
+decoration characters  -- the  interpreter already  knows the type.   In terms  of C,  symbol table
+entries are then  struct/union-combinations with a type field, a F<double>  field, a F<char*> field
+and so forth.   Perl symbols follow a contrary  design: globs are really pointer  sets to low-level
+structs that hold numbers, strings etc.  Naturally pointers to non-existing values are NULL, and so
+no type  field is required.   Perl interpreters can  now implement fine-grained  smart-pointers for
+reference-counting and copy-on-write, and must  not necessarily handle abstract unions.  In theory,
+the garbage-collector  should have "increased recycling  opportunities."  We do  know, for example,
+that F<perl> is very greedy with RAM: it almost never returns any memory to the operating system.
 
 Modifying F<$x>  in a Perl  program won't  change F<%x>, because  the typeglob F<*x>  is interposed
 between the stash and  the program's actual values for F<$x>, F<@x> etc.   The sigil F<*> serves as
@@ -4060,27 +4015,26 @@ wildcard for the other sigils F<%>, F<@>, F<$> and F<&>. (Hint: a F<sigil> is a 
 a specific magical purpose"; the name derives  from the latin F<sigilum> = seal.)
 
 Typeglobs cannot be dissolved  by F<L</compile>>, because when (e.g.)  F<$x> and  F<%x> are in use,
-F<*x> does not return something useful like 
+the glob F<*x> does not return some useful value like
 
     (SCALAR => \$x, HASH => \@x)
 
-Instead it plays the ball back:
+Typeglobs  are  also  not  interpolated  in  strings.   F<perl> always  plays  the  ball  back.   A
+typeglob-value is simply a string:
 
-    $ perl -e 'print *x'
+    $ perl -e '$x=1; @x=(1); print *x'
     *main::x
-
-Typeglobs are also not interpolated in strings:
 
     $ perl -e 'print "*x is not interpolated"'
     *x is not interpolated
 
-    $ perl -e 'print "although ".*x." could be a string"'
+    $ perl -e '$x = "this"; print "although ".*x." could be a string"'
     although *main::x could be a string
 
-Typeglobs (stash entries) are arranged by F<perl> on the fly, even with the F<use strict> pragma in
-effect:
+As one  can see, even when only  F<$x> is defined the  F<*x> does not return  its value.  Typeglobs
+(stash entries) are arranged by F<perl> on the fly, even with the F<use strict> pragma in effect:
 
-    $ perl -e 'package nirvana; use strict; print *x;'
+    $ perl -e 'package nirvana; use strict; print *x'
     *nirvana::x
 
 Each  typeglob is  a full  path into  the F<perl>  stashes, down  from the  F<defstash>:
@@ -4093,8 +4047,8 @@ Each  typeglob is  a full  path into  the F<perl>  stashes, down  from the  F<de
 
 B<GLOB-REFS>
 
-In the  C implementation of  Perl typeglobs have  the type F<GV> for  "Glob value".  Each  F<GV> is
-merely a  set of  pointers to sub-objects  for scalars,  arrays, hashes etc.   In Perl  the special
+In the C implementation of Perl, typeglobs have the struct-type F<GV> for "Glob value".  Each F<GV>
+is merely a  set of pointers to sub-objects  for scalars, arrays, hashes etc.  In  Perl the special
 syntax F<*x{ARRAY}>  accesses the  array-sub-object, and is  another way  to say F<\@x>.   But when
 applied to  a typeglob as F<\*foo>  it returns a typeglob-ref,  or globref.  So  the Perl backslash
 operator C<\> works like the address-of operator C<&> in C.
@@ -4108,18 +4062,18 @@ operator C<\> works like the address-of operator C<&> in C.
     $ perl -e 'print \*::'
     GLOB(0x10010f08)            # some globref
 
-In Perl4 you had to pass typeglob-refs  to pass references to functions (the backslash-operator was
-not  yet "invented").   Since  Perl5 saw  the  light of  day, typeglob-refs  can  be considered  as
-artefacts.  Note, however, that these artefacts are still faster than true references, because true
-references are themselves stored  in a typeglob (as REF type) and so  need to be dereferenced.  For
-example, when we  assign the scalar reference F<\$x>  to F<*x>, the typeglob will digest  it as REF
-attribute:
+Little do we know what happens inside F<perl>, when we assign REFs to typeglobs:
 
     $ perl -e '$x = 42; *x = \$x; print $x'
     42
+    $ perl -e '$y = 42; *x = \$y; print $x'
+    42
 
-Typeglob-refs in contrast can  be used directly by the interpreter (they  are raw F<GV>-pointers in
-the Perl interpreter).  For example:
+In Perl4 you had to pass typeglob-refs  to call functions by references (the backslash-operator was
+not  yet "invented").   Since  Perl5 saw  the  light of  day, typeglob-refs  can  be considered  as
+artefacts.  Note, however, that these veterans  are still faster than true references, because true
+references  are themselves stored  in a  typeglob (as  REF type)  and so  need to  be dereferenced.
+Globrefs can be used directly (as F<GV*>'s) by F<perl>.  For example,
 
     void f1 { my $bar = shift; ++$$bar }
     void f2 { local *bar = shift; ++$bar }
@@ -4137,26 +4091,41 @@ This smells like  a free lunch.  The penalty,  however, is that the F<bar> symbo
 removed from the stash.   One way is to say F<local *bar>, wich  temporarily assigns a new typeglob
 to F<bar> with all pointers zeroized:
 
-    void f { local *bar; ... }
+    package nirvana;
 
-The F<local>-statement will put  the F<bar> symbol into the package stash,  i.e., the same stash in
-which F<f> exists.
+    sub f { print $bar; }
+    sub g { local *bar; $bar = 42; f(); }
+
+    package main;
+
+    nirvana::g();
+
+Running this code as  Perl script prints the number assigned in F<g>.  F<f>  acts as a closure. The
+F<local>-statement will  put the  F<bar> symbol temporarily  into the package  stash F<%::nirvana>,
+i.e., the same stash in which F<f> and F<g> exist.  It will remove F<bar> when F<g> returns.
 
 B<*foo{THINGS}s>
 
-The F<*x{NAME}>  expression family is fondly  called "the F<*foo{THING}> syntax":
+The F<*x{NAME}> expression family is fondly called "the F<*foo{THING}> syntax":
 
     $scalarref = *x{SCALAR};
     $arrayref  = *ARGV{ARRAY};
     $hashref   = *ENV{HASH};
     $coderef   = *handlers{CODE};
-    $ioref     = *STDIN{IO};
-    $ioref     = *STDIN{FILEHANDLE};    # dto.
-    $globref   = *x{GLOB};
-    $globref   = \*x;                   # dto.
 
-When  Perl THINGs  are accessed  this way  few rules  apply.  Firstofall,  F<*foo{THING}s>  are not
-hashes. The syntax is a stopgap:
+    $ioref     = *STDIN{IO};
+    $ioref     = *STDIN{FILEHANDLE};    # same as *STDIN{IO}
+
+    $globref   = *x{GLOB};
+    $globref   = \*x;                   # same as *x{GLOB}
+    $undef     = *x{THIS_NAME_IS_NOT_SUPPORTED} # yields undef
+
+    die unless defined *x{SCALAR};      # ok -> will not die
+    die unless defined *x{GLOB};        # ok
+    die unless defined *x{HASH};        # error -> will die
+
+When THINGs are accessed this way few rules apply.  Firstofall, F<*foo{THING}s> are not hashes. The
+syntax is a stopgap:
 
     $ perl -e 'print \*x, *x{GLOB}, \*x{GLOB}'
     GLOB(0x100110b8)GLOB(0x100110b8)REF(0x1002e944)
@@ -4174,17 +4143,23 @@ returns an anonymous scalar-reference:
 
 In Perl5 it is still not possible to  get a reference to an I/O-handle (file-, directory- or socket
 handle) using  the backslash operator.  When a  function requires an I/O-handle  you must therefore
-pass a globref.   For new Perl programmers the syntax  is obscure, since it is  possible to pass an
-F<IO::Handle>-reference, a typeglob or a typeglob-ref as the filehandle.
+pass a globref.  More precisely, it is possible to pass an F<IO::Handle>-reference, a typeglob or a
+typeglob-ref as the filehandle.  This is obscure bot only for new Perl programmers.
 
     sub logprint($@) {
         my $fh = shift;
         print $fh map { "$_\n" } @_;
     }
 
-    logprint(*STDOUT{IO}, 'fee');   # pass IO-handle
-    logprint(*STDOUT    , 'fie');   # dto., pass typeglob
-    logprint(\*STDOUT   , 'foo');   # dto., pass typeglob-ref
+    logprint(*STDOUT{IO}, 'foo');   # pass IO-handle -> IO::Handle=IO(0x10011b44)
+    logprint(*STDOUT, 'bar');       # ok, pass typeglob-value -> '*main::STDOUT'
+    logprint(\*STDOUT, 'bar');      # ok, pass typeglob-ref -> 'GLOB(0x10011b2c)'
+    logprint(\*STDOUT{IO}, 'nope'); # ERROR -> won't accept 'REF(0x10010fe0)'
+
+It is very amusing that Perl, although refactoring  UNIX in form of a language, does not make clear
+what a file-  or socket-handle is.  The  global symbol STDOUT is actually  an F<IO::Handle> object,
+which F<perl>  had silently  instantiated.  To functions  like F<print>,  however, you may  pass an
+F<IO::Handle>, globname or globref.
 
 B<VIOLATING STASHES>
 
@@ -4197,9 +4172,9 @@ touch the stashes themselves:
     $ perl -e '$x = 42; *x = $x; print *42'
     *main::42
 
-By assigning  the scalar value  F<$x> to  F<*x> we have  effectively demolished the  stash: neither
-F<$42> nor  F<$main::42> are accessible. Symbols  like F<42> are  invalid, because 42 is  a numeric
-literal, not a string literal.
+By assigning the scalar value F<$x> to F<*x> we have demolished the stash (at least, logically):
+neither F<$42> nor F<$main::42> are accessible.  Symbols like F<42> are invalid, because 42 is a
+numeric literal, not a string literal.
 
     $ perl -e '$x = 42; *x = $x; print $main::42'
 
@@ -4214,6 +4189,9 @@ Nevertheless it is easy to confuse F<perl> this way:
     $ perl -e 'print *9'
     *main::9
 
+    $ perl -e 'print *42{GLOB}'
+    GLOB(0x100110b8)
+
     $ perl -e '*x = 42; print $::{42}, *x'
     *main::42*main::42
 
@@ -4223,8 +4201,8 @@ Nevertheless it is easy to confuse F<perl> this way:
 
 Of course these  behaviors are not reliable, and  may disappear in future versions  of F<perl>.  In
 German  you  say   "Schmutzeffekt"  (dirt  effect)  for  certain   mechanical  effects  that  occur
-non-intendedly  because machines  and electrical  circuits  are not  perfect, and  so is  software.
-However, "Schmutzeffekts" are neither bugs nor features, but phenomenons.
+non-intendedly,  because machines  and electrical  circuits are  not perfect,  and so  is software.
+However, "Schmutzeffekts" are neither bugs nor features; these are phenomenons.
 
 B<LEXICAL VARIABLES>
 
@@ -4235,7 +4213,7 @@ occupies a  slot in the scratchpad;  hence is addressed by  an integer index, no
 variables are like F<auto> variables in C.  They're also faster than F<local>s, because they can be
 allocated at compile time, not runtime. Therefore you cannot declare F<*x> lexically:
 
-    $ perl -e 'my(*x);'
+    $ perl -e 'my(*x)'
     Can't declare ref-to-glob cast in "my" at -e line 1, near ");"
 
 Seel also the Perl man-pages L<perlguts>, L<perlref>, L<perldsc> and L<perllol>.
@@ -4253,7 +4231,7 @@ process heap.   Like with Perl,  Rlist files can  have hundreds of megabytes  of
 processable in constant time, with constant  memory requirements.  For example, a 300 MB Rlist-file
 can be read from a C++ process which will not peak over 400-500 MB of process RAM.
 
-=head3 Bugs
+=head1 BUGS
 
 There are no known bugs, this package is stable.  Deficiencies and TODOs:
 
